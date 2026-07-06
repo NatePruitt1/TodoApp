@@ -1,25 +1,97 @@
 package services
 
 import (
+	"backend/internal/config"
 	"backend/internal/dto"
+	"backend/internal/models"
 	"backend/internal/repository"
 	"context"
+	"errors"
+	"fmt"
+	"time"
+
+	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
+var ErrUsernameTaken = errors.New("Username taken.")
+
 type UserService interface {
-	Authenticate(ctx context.Context, username, password string)
+	CreateAccount(ctx context.Context, username, password string) (dto.LoginResponseDTO, string, error)
+	AuthenticateAccount(ctx context.Context, username, password string) (dto.LoginResponseDTO, string, error)
 }
 
 type UserServiceImpl struct {
-	repo *repository.UserRepositoryImpl
+	repo   repository.UserRepository
+	config *config.Config
 }
 
-func NewUserService(repository *repository.UserRepositoryImpl) *UserServiceImpl {
+func NewUserService(repository *repository.UserRepositoryImpl, cfg *config.Config) *UserServiceImpl {
 	return &UserServiceImpl{
-		repo: repository,
+		repo:   repository,
+		config: cfg,
 	}
 }
 
-func (u *UserServiceImpl) Authenticate(ctx context.Context, username, password string) (dto.LoginResponseDTO, error) {
+func (u *UserServiceImpl) AuthenticateAccount(ctx context.Context, username, password string) (dto.LoginResponseDTO, string, error) {
+	uret, err := u.repo.GetByUsername(username)
+	if err != nil {
+		return dto.LoginResponseDTO{}, "", err
+	}
 
+	if e := bcrypt.CompareHashAndPassword([]byte(uret.PasswordHash), []byte(password)); e != nil {
+		return dto.LoginResponseDTO{}, "", err
+	}
+
+	token, e := GenerateToken(uret, u.config.JwtSecret)
+	if e != nil {
+		return dto.LoginResponseDTO{}, "", e
+	}
+
+	return dto.LoginResponseDTO{
+		ID:        uret.ID,
+		Username:  username,
+		CreatedAt: uret.CreatedAt,
+		LastLogin: uret.LastLogin,
+	}, token, nil
+}
+
+func (u *UserServiceImpl) CreateAccount(ctx context.Context, username, password string) (dto.LoginResponseDTO, string, error) {
+	// Get if there is a user with the name.
+	u_ret, e := u.repo.GetByUsername(username)
+	if e == nil {
+		fmt.Printf("User found: %v\n", u_ret)
+		return dto.LoginResponseDTO{}, "", ErrUsernameTaken
+	}
+
+	bytes, e := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if e != nil {
+		return dto.LoginResponseDTO{}, "", e
+	}
+
+	passwordHash := string(bytes)
+	user := models.User{
+		ID:           uuid.New(),
+		Username:     username,
+		PasswordHash: passwordHash,
+		CreatedAt:    time.Now(),
+		LastLogin:    nil,
+	}
+
+	e = u.repo.Create(user)
+	if e != nil {
+		return dto.LoginResponseDTO{}, "", e
+	}
+
+	token, e := GenerateToken(user, u.config.JwtSecret)
+	if e != nil {
+		return dto.LoginResponseDTO{}, "", e
+	}
+
+	return dto.LoginResponseDTO{
+		ID:        user.ID,
+		Username:  username,
+		CreatedAt: user.CreatedAt,
+		LastLogin: user.LastLogin,
+	}, token, nil
 }

@@ -15,7 +15,9 @@ var ErrUserNotFound = errors.New("user not found")
 
 type UserRepository interface {
 	Create(user models.User) error
+	Delete(id uuid.UUID) error
 	GetByUsername(username string) (models.User, error)
+	GetByID(id uuid.UUID) (models.User, error)
 	UpdateLastLogin(userID uuid.UUID, at time.Time) error
 }
 
@@ -62,7 +64,7 @@ func (r *UserRepositoryImpl) Delete(id uuid.UUID) error {
 	}
 }
 
-func (r *UserRepositoryImpl) GetbyUsername(username string) (models.User, error) {
+func (r *UserRepositoryImpl) GetByUsername(username string) (models.User, error) {
 	const q = `
 		SELECT id, username, password_hash, created_at, last_login 
 		FROM users

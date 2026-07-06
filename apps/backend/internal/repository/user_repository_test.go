@@ -59,7 +59,7 @@ func TestUserRepository_Create(t *testing.T) {
 		t.Fatalf("Error creating user. %v", e)
 	}
 
-	u, e := repo.GetbyUsername("username")
+	u, e := repo.GetByUsername("username")
 	if e != nil {
 		t.Fatalf("Error getting user. %v", e)
 	}
@@ -107,7 +107,7 @@ func TestUserRepository_GetByUsername(t *testing.T) {
 	pool := setTestDB(t)
 	repo := NewUserRepository(pool)
 
-	_, e := repo.GetbyUsername("UserDoesNotExist")
+	_, e := repo.GetByUsername("UserDoesNotExist")
 	if e == nil {
 		t.Fatal("Bad retrieval should have returned an error.")
 	}
@@ -177,7 +177,7 @@ func TestUserRepository_UpdateLastLogin(t *testing.T) {
 		t.Fatalf("Failed to update last login. %v", e)
 	}
 
-	u, e := repo.GetbyUsername("username")
+	u, e := repo.GetByUsername("username")
 	if e != nil {
 		t.Fatalf("Failed to fetch user. %v", e)
 	}
