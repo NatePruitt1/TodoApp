@@ -2,12 +2,21 @@ package handlers
 
 import (
 	"backend/internal/dto"
+	"backend/internal/services"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-func LoginHandler(c *gin.Context) {
+type UserHandler interface {
+	LoginHandler(c *gin.Context)
+}
+
+type UserHandlerImpl struct {
+	UserService *services.UserService
+}
+
+func (uh *UserHandlerImpl) LoginHandler(c *gin.Context) {
 	var req dto.LoginRequestDTO
 
 	if err := c.ShouldBindJSON(&req); err != nil {
