@@ -9,20 +9,25 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// UserHandler interface allows DI for the user handler functionality.
 type UserHandler interface {
 	LoginHandler(c *gin.Context)
 }
 
+// UserHandlerImpl is the main UserHandler implementation.
+// The UserHandler interface is implemented on (*UserHandlerImpl)
 type UserHandlerImpl struct {
 	UserService services.UserService
 }
 
+// Creates and returns a new (*UserHandlerImpl) for use as a UserHandler.
 func NewUserHandler(service services.UserService) *UserHandlerImpl {
 	return &UserHandlerImpl{
 		UserService: service,
 	}
 }
 
+// Handles the creation or rejection of a new account on the create endpoint.
 func (uh *UserHandlerImpl) CreateAccountHandler(c *gin.Context) {
 	var req dto.LoginRequestDTO
 	var resp dto.LoginResponseDTO
@@ -45,6 +50,7 @@ func (uh *UserHandlerImpl) CreateAccountHandler(c *gin.Context) {
 	})
 }
 
+// Handles login requests to allow users to authenticate.
 func (uh *UserHandlerImpl) LoginHandler(c *gin.Context) {
 	var req dto.LoginRequestDTO
 
