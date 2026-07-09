@@ -1,0 +1,11 @@
+{
+	"name": "backend",
+	"private": true,
+	"version": "0.0.0",
+	"scripts": {
+		"dev": "go run ./cmd/api",
+		"build": "mkdir -p dist && go build -o dist/api ./cmd/api",
+		"test": "go test ./...",
+		"lint": "go vet ./..."
+	}
+}
