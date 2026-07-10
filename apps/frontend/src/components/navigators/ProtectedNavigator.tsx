@@ -1,15 +1,16 @@
-import { Outlet, useNavigate } from "react-router";
+import { Outlet, Navigate } from "react-router";
 import { useAuth } from "../AuthContext";
 import { requireAuth } from "../../utils/Auth";
 
 export function ProtectedNavigator() {
-    const navigate = useNavigate();
     const userContext = useAuth();
 
     try {
-        requireAuth(userContext);
+        const s = requireAuth(userContext);
+        console.log(s)
     } catch (e) {
-        navigate('/login')
+        console.log(e)
+        return (<><Navigate to="/login" replace={true} /></>)
     }
 
     return (
