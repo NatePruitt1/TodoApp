@@ -1,24 +1,23 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useState, type PropsWithChildren } from "react";
 
-interface UserContextType {
-    username: string | null;
-    setUsername: (name: string | null) => void
+export interface UserContextType {
+    username: string;
+    jwt: string;
+    expiry: Date;
+    setExpiry: (expiry: Date) => void
+    setUsername: (name: string) => void
+    setJWT: (jwt: string) => void
 }
 
 const AuthContext = createContext<UserContextType | null>(null);
 
-interface ProviderProps {
-    children: ReactNode;
-}
+export function AuthProvider({ children }: PropsWithChildren) {
+    const [username, setUsername] = useState<string>("");
+    const [jwt, setJWT] = useState<string>("");
+    const [expiry, setExpiry] = useState<Date>(new Date());
 
-export function AuthProvider({ children }: ProviderProps) {
-    const [username, setUsername] = useState<string | null>(null);
-    const setUsernameWrap = (name: string | null) => {
-        console.log(name);
-        setUsername(name)
-    }
     return (
-        <AuthContext.Provider value= {{ username, setUsername: setUsernameWrap }}>
+        <AuthContext.Provider value= {{ username, jwt, expiry, setUsername: setUsername, setJWT: setJWT, setExpiry: setExpiry}}>
             {children}
         </AuthContext.Provider>
     )
