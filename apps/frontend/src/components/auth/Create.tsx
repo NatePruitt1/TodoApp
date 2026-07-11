@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import './Login.css'
 import { useNavigate } from 'react-router';
 import { useAuth } from '../AuthContext';
+import { jwtDecode } from 'jwt-decode';
+import type { JwtData } from '../../types/Jwt';
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -32,8 +34,20 @@ function Create() {
                 )
     
                 if(resp.ok) {
-                    console.log(formData)
+                    const authHeader = resp.headers.get("Authorization")
+                    const token = authHeader && authHeader.replace(/^Bearer\s+/i, '');
+                    
+                    if(token == null) {
+                        throw new Error("Token not included in response.")
+                    }
+    
                     userContext.setUsername(formData.username);
+                    userContext.setJWT(token)
+    
+                    const payload = jwtDecode<JwtData>(token)
+    
+                    userContext.setExpiry(new Date(payload.exp * 1000))
+    
                     setFormData({username: "", password: ""})
                     navigate("/")
                 } else {
