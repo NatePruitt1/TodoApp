@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 // UserHandler interface allows DI for the user handler functionality.
@@ -46,7 +45,7 @@ func (uh *UserHandlerImpl) CreateAccountHandler(c *gin.Context) {
 		return
 	}
 
-	_, refreshTokenStr, err := uh.RefreshTokenService.CreateToken(uuid.New(), resp.ID)
+	refreshToken, err := uh.RefreshTokenService.CreateToken(resp.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.BadRequestError("Failed to create refresh token.", err.Error()))
 		return
@@ -54,7 +53,7 @@ func (uh *UserHandlerImpl) CreateAccountHandler(c *gin.Context) {
 
 	c.SetSameSite(http.SameSiteStrictMode)
 	c.SetCookie("refresh_token",
-		refreshTokenStr,
+		refreshToken.Raw,
 		7*24*60*60,
 		"/refresh",
 		"",
@@ -84,7 +83,7 @@ func (uh *UserHandlerImpl) LoginHandler(c *gin.Context) {
 		return
 	}
 
-	_, refreshTokenStr, err := uh.RefreshTokenService.CreateToken(uuid.New(), resp.ID)
+	refreshToken, err := uh.RefreshTokenService.CreateToken(resp.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.BadRequestError("Failed to create refresh token.", err.Error()))
 		return
@@ -92,7 +91,7 @@ func (uh *UserHandlerImpl) LoginHandler(c *gin.Context) {
 
 	c.SetSameSite(http.SameSiteStrictMode)
 	c.SetCookie("refresh_token",
-		refreshTokenStr,
+		refreshToken.Raw,
 		7*24*60*60,
 		"/refresh",
 		"",
