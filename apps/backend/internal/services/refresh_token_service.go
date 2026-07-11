@@ -4,6 +4,9 @@ import (
 	"backend/internal/config"
 	"backend/internal/models"
 	"backend/internal/repository"
+	"crypto/rand"
+	"crypto/sha512"
+	"encoding/hex"
 	"errors"
 	"time"
 
@@ -11,11 +14,9 @@ import (
 )
 
 type RefreshTokenService interface {
-	CreateToken(id uuid.UUID, userId uuid.UUID) (models.RefreshToken, string, error)
-	CheckToken(id uuid.UUID) (models.RefreshToken, string, error)
-	UpdateToken(id uuid.UUID) (models.RefreshToken, string, error)
-	GetJWT(token models.RefreshToken) (string, error)
-	ParseJWT(token string) (models.RefreshToken, error)
+	CreateToken(userId uuid.UUID) (models.RefreshToken, error)
+	CheckToken(id string) (models.RefreshToken, error)
+	UpdateToken(id string) (models.RefreshToken, error)
 }
 
 type RefreshTokenServiceImpl struct {
@@ -30,62 +31,62 @@ func NewRefreshTokenService(repository repository.RefreshTokenRepository, cfg *c
 	}
 }
 
-func (rts *RefreshTokenServiceImpl) GetJWT(token models.RefreshToken) (string, error) {
-	return GenerateRefreshToken(token, rts.config.JwtSecret)
+func generateRefreshToken() (string, string, error) {
+	bytes := make([]byte, 32)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", "", err
+	}
+	raw := hex.EncodeToString(bytes)
+	sum := sha512.Sum512([]byte(raw))
+	hash := hex.EncodeToString(sum[:])
+	return raw, hash, nil
 }
 
-func (rts *RefreshTokenServiceImpl) ParseJWT(token string) (models.RefreshToken, error) {
-	return ParseRefreshToken(token, rts.config.JwtSecret)
-}
+func (rts *RefreshTokenServiceImpl) CreateToken(userId uuid.UUID) (models.RefreshToken, error) {
+	raw, id, err := generateRefreshToken()
+	if err != nil {
+		return models.RefreshToken{}, err
+	}
 
-func (rts *RefreshTokenServiceImpl) CreateToken(id uuid.UUID, userId uuid.UUID) (models.RefreshToken, string, error) {
 	token := models.RefreshToken{
-		Id:        id,
+		Raw:       raw,
+		Hash:      id,
 		UserId:    userId,
 		ExpiresAt: time.Now().Add(7 * 24 * time.Hour),
 		IssuedAt:  time.Now(),
 	}
 
-	tokenStr, err := rts.GetJWT(token)
+	err = rts.repo.Create(token)
 	if err != nil {
-		return models.RefreshToken{}, "", err
+		return models.RefreshToken{}, err
 	}
 
-	err = rts.repo.Create(id, tokenStr)
-	if err != nil {
-		return models.RefreshToken{}, "", err
-	}
-
-	return token, tokenStr, nil
+	return token, nil
 }
 
-func (rts *RefreshTokenServiceImpl) CheckToken(id uuid.UUID) (models.RefreshToken, string, error) {
-	token, err := rts.repo.Get(id)
+func (rts *RefreshTokenServiceImpl) CheckToken(id string) (models.RefreshToken, error) {
+	sum := sha512.Sum512([]byte(id))
+	hash := hex.EncodeToString(sum[:])
+
+	token, err := rts.repo.Get(hash)
 	if err != nil {
-		return models.RefreshToken{}, "", err
+		return models.RefreshToken{}, err
 	}
 
-	if token.ExpiresAt.After(time.Now()) {
-		rts.repo.Delete(id)
-		return models.RefreshToken{}, "", errors.New("Token is expired.")
+	if time.Now().After(token.ExpiresAt) {
+		rts.repo.Delete(hash)
+		return models.RefreshToken{}, errors.New("Token is expired.")
 	}
 
-	tokenStr, err := rts.GetJWT(token)
-	if err != nil {
-		return models.RefreshToken{}, "", err
-	}
-
-	return token, tokenStr, nil
+	return token, nil
 }
 
-func (rts *RefreshTokenServiceImpl) UpdateToken(id uuid.UUID) (models.RefreshToken, string, error) {
-	token, _, err := rts.CheckToken(id)
+func (rts *RefreshTokenServiceImpl) UpdateToken(id string) (models.RefreshToken, error) {
+	token, err := rts.CheckToken(id)
 	if err != nil {
-		return models.RefreshToken{}, "", err
+		return models.RefreshToken{}, err
 	}
 
 	rts.repo.Delete(id)
-	token.Id = uuid.New()
-
-	return rts.CreateToken(token.Id, token.UserId)
+	return rts.CreateToken(token.UserId)
 }

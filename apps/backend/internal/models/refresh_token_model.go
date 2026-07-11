@@ -7,7 +7,8 @@ import (
 )
 
 type RefreshToken struct {
-	Id        uuid.UUID
+	Raw       string
+	Hash      string
 	UserId    uuid.UUID
 	ExpiresAt time.Time
 	IssuedAt  time.Time
