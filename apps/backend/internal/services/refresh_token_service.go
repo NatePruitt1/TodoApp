@@ -87,6 +87,6 @@ func (rts *RefreshTokenServiceImpl) UpdateToken(id string) (models.RefreshToken,
 		return models.RefreshToken{}, err
 	}
 
-	rts.repo.Delete(id)
+	rts.repo.Delete(token.Hash)
 	return rts.CreateToken(token.UserId)
 }

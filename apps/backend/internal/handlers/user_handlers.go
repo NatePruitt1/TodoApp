@@ -55,7 +55,7 @@ func (uh *UserHandlerImpl) CreateAccountHandler(c *gin.Context) {
 	c.SetCookie("refresh_token",
 		refreshToken.Raw,
 		7*24*60*60,
-		"/refresh",
+		"/api/v0/refresh",
 		"",
 		true,
 		true,
@@ -93,7 +93,7 @@ func (uh *UserHandlerImpl) LoginHandler(c *gin.Context) {
 	c.SetCookie("refresh_token",
 		refreshToken.Raw,
 		7*24*60*60,
-		"/refresh",
+		"/api/v0/refresh",
 		"",
 		true,
 		true,
@@ -104,4 +104,49 @@ func (uh *UserHandlerImpl) LoginHandler(c *gin.Context) {
 		"status": "success",
 		"data":   resp,
 	})
+}
+
+func (uh *UserHandlerImpl) RefreshHandler(c *gin.Context) {
+	raw, ok := c.Get("refresh_token")
+	if !ok {
+		c.JSON(http.StatusBadRequest, dto.BadRequestError("No refresh token provided.", ""))
+		return
+	}
+
+	tokenId, ok := raw.(string)
+	if !ok {
+		c.JSON(http.StatusBadRequest, dto.BadRequestError("Invalid refresh token provided.", "Could not parse refresh token string."))
+		return
+	}
+
+	_, err := uh.RefreshTokenService.CheckToken(tokenId)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, dto.BadRequestError("Refresh token not accepted.", err.Error()))
+		return
+	}
+
+	token, err := uh.RefreshTokenService.UpdateToken(tokenId)
+
+	c.SetSameSite(http.SameSiteStrictMode)
+	c.SetCookie("refresh_token",
+		token.Raw,
+		7*24*60*60,
+		"/api/v0/refresh",
+		"",
+		true,
+		true,
+	)
+
+	resp, authToken, err := uh.UserService.RefreshAccount(context.Background(), token.UserId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.BadRequestError("Failed to log into account using refresh.", err.Error()))
+		return
+	}
+
+	c.Header("Authorization", "Bearer "+authToken)
+	c.JSON(http.StatusAccepted, gin.H{
+		"status": "success",
+		"data":   resp,
+	})
+
 }

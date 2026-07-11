@@ -19,6 +19,7 @@ var ErrUsernameTaken = errors.New("Username taken.")
 type UserService interface {
 	CreateAccount(ctx context.Context, username, password string) (dto.LoginResponseDTO, string, error)
 	AuthenticateAccount(ctx context.Context, username, password string) (dto.LoginResponseDTO, string, error)
+	RefreshAccount(ctx context.Context, userId uuid.UUID) (dto.LoginResponseDTO, string, error)
 }
 
 type UserServiceImpl struct {
@@ -26,7 +27,7 @@ type UserServiceImpl struct {
 	config *config.Config
 }
 
-func NewUserService(repository *repository.UserRepositoryImpl, cfg *config.Config) *UserServiceImpl {
+func NewUserService(repository *repository.UserRepositoryImpl, cfg *config.Config) UserService {
 	return &UserServiceImpl{
 		repo:   repository,
 		config: cfg,
@@ -48,11 +49,36 @@ func (u *UserServiceImpl) AuthenticateAccount(ctx context.Context, username, pas
 		return dto.LoginResponseDTO{}, "", e
 	}
 
+	curr := time.Now()
+	u.repo.UpdateLastLogin(uret.ID, curr)
+
 	return dto.LoginResponseDTO{
 		ID:        uret.ID,
 		Username:  username,
 		CreatedAt: uret.CreatedAt,
-		LastLogin: uret.LastLogin,
+		LastLogin: &curr,
+	}, token, nil
+}
+
+func (u *UserServiceImpl) RefreshAccount(ctx context.Context, userId uuid.UUID) (dto.LoginResponseDTO, string, error) {
+	uret, err := u.repo.GetByID(userId)
+	if err != nil {
+		return dto.LoginResponseDTO{}, "", err
+	}
+
+	token, e := GenerateToken(uret, u.config.JwtSecret)
+	if e != nil {
+		return dto.LoginResponseDTO{}, "", e
+	}
+
+	curr := time.Now()
+	u.repo.UpdateLastLogin(uret.ID, curr)
+
+	return dto.LoginResponseDTO{
+		ID:        uret.ID,
+		Username:  uret.Username,
+		CreatedAt: uret.CreatedAt,
+		LastLogin: &curr,
 	}, token, nil
 }
 

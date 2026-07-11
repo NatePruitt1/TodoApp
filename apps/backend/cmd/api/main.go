@@ -47,13 +47,17 @@ func main() {
 		panic(-1)
 	}
 
+	tokenRepo := repository.NewRefreshTokenRepository(pool)
+	tokenService := services.NewRefreshTokenService(tokenRepo, cfg)
+
 	userRepo := repository.NewUserRepository(pool)
 	userService := services.NewUserService(userRepo, cfg)
-	userHandler := handlers.NewUserHandler(userService)
+	userHandler := handlers.NewUserHandler(userService, tokenService)
 
 	api := router.Group("/api/v0")
 	api.POST("/create", userHandler.CreateAccountHandler)
 	api.POST("/login", userHandler.LoginHandler)
+	api.POST("/refresh", userHandler.RefreshHandler)
 
 	fmt.Println("Running server on :8080")
 	router.Run(":8080")
