@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type PropsWithChildren } from "react";
+import { createContext, useContext, useEffect, useState, type PropsWithChildren } from "react";
 
 export interface UserContextType {
     username: string;
@@ -16,6 +16,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
     const [jwt, setJWT] = useState<string>("");
     const [expiry, setExpiry] = useState<Date>(new Date());
 
+    useEffect(() => {
+        fetch("/refresh")
+    })
+    
     return (
         <AuthContext.Provider value= {{ username, jwt, expiry, setUsername: setUsername, setJWT: setJWT, setExpiry: setExpiry}}>
             {children}

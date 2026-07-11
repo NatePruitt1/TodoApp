@@ -10,6 +10,9 @@ export function ProtectedNavigator() {
         console.log(s)
     } catch (e) {
         console.log(e)
+        
+        
+        
         return (<><Navigate to="/login" replace={true} /></>)
     }
 

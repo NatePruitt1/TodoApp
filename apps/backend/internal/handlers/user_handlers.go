@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 // UserHandler interface allows DI for the user handler functionality.
@@ -17,13 +18,15 @@ type UserHandler interface {
 // UserHandlerImpl is the main UserHandler implementation.
 // The UserHandler interface is implemented on (*UserHandlerImpl)
 type UserHandlerImpl struct {
-	UserService services.UserService
+	UserService         services.UserService
+	RefreshTokenService services.RefreshTokenService
 }
 
 // Creates and returns a new (*UserHandlerImpl) for use as a UserHandler.
-func NewUserHandler(service services.UserService) *UserHandlerImpl {
+func NewUserHandler(service services.UserService, refreshTokService services.RefreshTokenService) *UserHandlerImpl {
 	return &UserHandlerImpl{
-		UserService: service,
+		RefreshTokenService: refreshTokService,
+		UserService:         service,
 	}
 }
 
@@ -42,6 +45,22 @@ func (uh *UserHandlerImpl) CreateAccountHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, dto.BadRequestError("Failed to create account.", err.Error()))
 		return
 	}
+
+	_, refreshTokenStr, err := uh.RefreshTokenService.CreateToken(uuid.New(), resp.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.BadRequestError("Failed to create refresh token.", err.Error()))
+		return
+	}
+
+	c.SetSameSite(http.SameSiteStrictMode)
+	c.SetCookie("refresh_token",
+		refreshTokenStr,
+		7*24*60*60,
+		"/refresh",
+		"",
+		true,
+		true,
+	)
 
 	c.Header("Authorization", "Bearer "+token)
 	c.JSON(http.StatusCreated, gin.H{
@@ -64,6 +83,22 @@ func (uh *UserHandlerImpl) LoginHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, dto.BadRequestError("Failed to create account.", err.Error()))
 		return
 	}
+
+	_, refreshTokenStr, err := uh.RefreshTokenService.CreateToken(uuid.New(), resp.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.BadRequestError("Failed to create refresh token.", err.Error()))
+		return
+	}
+
+	c.SetSameSite(http.SameSiteStrictMode)
+	c.SetCookie("refresh_token",
+		refreshTokenStr,
+		7*24*60*60,
+		"/refresh",
+		"",
+		true,
+		true,
+	)
 
 	c.Header("Authorization", "Bearer "+token)
 	c.JSON(http.StatusAccepted, gin.H{
