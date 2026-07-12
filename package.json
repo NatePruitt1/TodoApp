@@ -10,7 +10,9 @@
         "build": "turbo build",
         "dev": "turbo run dev --parallel",
         "test": "turbo test",
-        "lint": "turbo lint"
+        "lint": "turbo lint",
+        "dropdb": "migrate -path apps/backend/internal/db/migrations -database 'postgresql://postgres:Wallah54639!@localhost:5432/kanban' down",
+        "migrate": "migrate -path apps/backend/internal/db/migrations -database 'postgresql://postgres:Wallah54639!@localhost:5432/kanban' up"
     },
     "devDependencies": {
         "turbo": "^2.10.3"

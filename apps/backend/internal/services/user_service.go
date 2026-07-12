@@ -7,7 +7,6 @@ import (
 	"backend/internal/repository"
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -84,9 +83,8 @@ func (u *UserServiceImpl) RefreshAccount(ctx context.Context, userId uuid.UUID) 
 
 func (u *UserServiceImpl) CreateAccount(ctx context.Context, username, password string) (dto.LoginResponseDTO, string, error) {
 	// Get if there is a user with the name.
-	u_ret, e := u.repo.GetByUsername(username)
+	_, e := u.repo.GetByUsername(username)
 	if e == nil {
-		fmt.Printf("User found: %v\n", u_ret)
 		return dto.LoginResponseDTO{}, "", ErrUsernameTaken
 	}
 

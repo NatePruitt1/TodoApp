@@ -4,6 +4,7 @@ import (
 	"backend/internal/models"
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -11,20 +12,42 @@ import (
 type RefreshTokenRepository interface {
 	Create(token models.RefreshToken) error
 	Get(hash string) (models.RefreshToken, error)
+	GetByUser(userId uuid.UUID) (models.RefreshToken, error)
 	Delete(hash string) error
 }
 
-type RefreshTokenRespositoryImpl struct {
+type RefreshTokenRepositoryImpl struct {
 	db *pgxpool.Pool
 }
 
 func NewRefreshTokenRepository(db *pgxpool.Pool) RefreshTokenRepository {
-	return &RefreshTokenRespositoryImpl{
+	return &RefreshTokenRepositoryImpl{
 		db: db,
 	}
 }
 
-func (rtr *RefreshTokenRespositoryImpl) Create(token models.RefreshToken) error {
+func (rtr *RefreshTokenRepositoryImpl) GetByUser(userId uuid.UUID) (models.RefreshToken, error) {
+	const q = `
+		SELECT hash, user_id, expires_at, created_at FROM refresh_tokens WHERE user_id = $1
+	`
+
+	var token models.RefreshToken
+
+	err := rtr.db.QueryRow(context.Background(), q, userId).Scan(
+		&token.Hash,
+		&token.UserId,
+		&token.ExpiresAt,
+		&token.IssuedAt,
+	)
+
+	if err != nil {
+		return models.RefreshToken{}, err
+	}
+
+	return token, nil
+}
+
+func (rtr *RefreshTokenRepositoryImpl) Create(token models.RefreshToken) error {
 	const q = `
 		INSERT INTO refresh_tokens (hash, user_id, expires_at, created_at)
 		VALUES ($1, $2, $3, $4)
@@ -40,9 +63,9 @@ func (rtr *RefreshTokenRespositoryImpl) Create(token models.RefreshToken) error 
 	return err
 }
 
-func (rtr *RefreshTokenRespositoryImpl) Get(hash string) (models.RefreshToken, error) {
+func (rtr *RefreshTokenRepositoryImpl) Get(hash string) (models.RefreshToken, error) {
 	const q = `
-		SELECT (hash, user_id, expires_at, created_at) FROM refresh_tokens WHERE id = $1
+		SELECT hash, user_id, expires_at, created_at FROM refresh_tokens WHERE hash = $1
 	`
 
 	var token models.RefreshToken
@@ -61,7 +84,7 @@ func (rtr *RefreshTokenRespositoryImpl) Get(hash string) (models.RefreshToken, e
 	return token, nil
 }
 
-func (rtr *RefreshTokenRespositoryImpl) Delete(hash string) error {
+func (rtr *RefreshTokenRepositoryImpl) Delete(hash string) error {
 	const q = `
 		DELETE FROM refresh_tokens
 		WHERE hash = $1

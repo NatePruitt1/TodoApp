@@ -29,7 +29,8 @@ function Login() {
             let resp = await fetch(BASE_URL + "/api/v0/login",
                 {
                     method: "POST",
-                    body: JSON.stringify(formData)
+                    body: JSON.stringify(formData),
+                    credentials: "include"
                 }
             )
 
@@ -37,7 +38,7 @@ function Login() {
                 const authHeader = resp.headers.get("Authorization")
                 const token = authHeader && authHeader.replace(/^Bearer\s+/i, '');
                 
-                if(token == null) {
+                if(!token) {
                     throw new Error("Token not included in response.")
                 }
 

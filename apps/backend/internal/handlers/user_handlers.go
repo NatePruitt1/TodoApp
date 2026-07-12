@@ -9,6 +9,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const RTOKEN_PATH = "/api/v0/refresh"
+
 // UserHandler interface allows DI for the user handler functionality.
 type UserHandler interface {
 	LoginHandler(c *gin.Context)
@@ -30,7 +32,20 @@ func NewUserHandler(service services.UserService, refreshTokService services.Ref
 }
 
 func (uh *UserHandlerImpl) deleteRefreshToken(c *gin.Context) {
-	c.SetCookie("refresh_token", "", -1, "/", "", true, true)
+	c.SetCookie("refresh_token", "", -1, RTOKEN_PATH, "", false, true)
+}
+
+func (uh *UserHandlerImpl) createRefreshToken(c *gin.Context, token string) {
+
+	c.SetSameSite(http.SameSiteStrictMode)
+	c.SetCookie("refresh_token",
+		token,
+		7*24*60*60,
+		RTOKEN_PATH,
+		"",
+		false,
+		true,
+	)
 }
 
 // Handles the creation or rejection of a new account on the create endpoint.
@@ -51,22 +66,17 @@ func (uh *UserHandlerImpl) CreateAccountHandler(c *gin.Context) {
 		return
 	}
 
-	refreshToken, err := uh.RefreshTokenService.CreateToken(resp.ID)
+	refreshToken, err := uh.RefreshTokenService.CheckTokenForUser(resp.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.BadRequestError("Failed to create refresh token.", err.Error()))
-		uh.deleteRefreshToken(c)
-		return
+		refreshToken, err = uh.RefreshTokenService.CreateToken(resp.ID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, dto.BadRequestError("Failed to create refresh token.", err.Error()))
+			uh.deleteRefreshToken(c)
+			return
+		}
 	}
 
-	c.SetSameSite(http.SameSiteStrictMode)
-	c.SetCookie("refresh_token",
-		refreshToken.Raw,
-		7*24*60*60,
-		"/api/v0/refresh",
-		"",
-		true,
-		true,
-	)
+	uh.createRefreshToken(c, refreshToken.Raw)
 
 	c.Header("Authorization", "Bearer "+token)
 	c.JSON(http.StatusCreated, gin.H{
@@ -92,22 +102,24 @@ func (uh *UserHandlerImpl) LoginHandler(c *gin.Context) {
 		return
 	}
 
-	refreshToken, err := uh.RefreshTokenService.CreateToken(resp.ID)
+	refreshToken, err := uh.RefreshTokenService.CheckTokenForUser(resp.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.BadRequestError("Failed to create refresh token.", err.Error()))
-		uh.deleteRefreshToken(c)
-		return
+		refreshToken, err = uh.RefreshTokenService.CreateToken(resp.ID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, dto.BadRequestError("Failed to create refresh token.", err.Error()))
+			uh.deleteRefreshToken(c)
+			return
+		}
+	} else {
+		refreshToken, err = uh.RefreshTokenService.UpdateTokenByHash(refreshToken.Hash)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, dto.BadRequestError("Failed to create refresh token.", err.Error()))
+			uh.deleteRefreshToken(c)
+			return
+		}
 	}
 
-	c.SetSameSite(http.SameSiteStrictMode)
-	c.SetCookie("refresh_token",
-		refreshToken.Raw,
-		7*24*60*60,
-		"/api/v0/refresh",
-		"",
-		true,
-		true,
-	)
+	uh.createRefreshToken(c, refreshToken.Raw)
 
 	c.Header("Authorization", "Bearer "+token)
 	c.JSON(http.StatusAccepted, gin.H{
@@ -117,37 +129,24 @@ func (uh *UserHandlerImpl) LoginHandler(c *gin.Context) {
 }
 
 func (uh *UserHandlerImpl) RefreshHandler(c *gin.Context) {
-	raw, ok := c.Get("refresh_token")
-	if !ok {
+	raw, err := c.Cookie("refresh_token")
+	if err != nil {
 		c.JSON(http.StatusBadRequest, dto.BadRequestError("No refresh token provided.", ""))
 		return
 	}
 
-	tokenId, ok := raw.(string)
-	if !ok {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError("Invalid refresh token provided.", "Could not parse refresh token string."))
-		uh.deleteRefreshToken(c)
-		return
-	}
-
-	_, err := uh.RefreshTokenService.CheckToken(tokenId)
+	_, err = uh.RefreshTokenService.CheckToken(raw)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, dto.BadRequestError("Refresh token not accepted.", err.Error()))
 		uh.deleteRefreshToken(c)
 		return
 	}
 
-	token, err := uh.RefreshTokenService.UpdateToken(tokenId)
-
-	c.SetSameSite(http.SameSiteStrictMode)
-	c.SetCookie("refresh_token",
-		token.Raw,
-		7*24*60*60,
-		"/api/v0/refresh",
-		"",
-		true,
-		true,
-	)
+	token, err := uh.RefreshTokenService.UpdateToken(raw)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.BadRequestError("Failed to update refresh token.", err.Error()))
+		return
+	}
 
 	resp, authToken, err := uh.UserService.RefreshAccount(context.Background(), token.UserId)
 	if err != nil {
@@ -155,6 +154,8 @@ func (uh *UserHandlerImpl) RefreshHandler(c *gin.Context) {
 		uh.deleteRefreshToken(c)
 		return
 	}
+
+	uh.createRefreshToken(c, token.Raw)
 
 	c.Header("Authorization", "Bearer "+authToken)
 	c.JSON(http.StatusAccepted, gin.H{
