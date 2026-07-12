@@ -52,6 +52,40 @@ export function AuthProvider({ children }: PropsWithChildren) {
             }).finally(() => setLoading(false))
         }
     }, []);
+
+    useEffect(() => {
+        if (!jwt) return;
+
+        const msUntilExpire = expiry.getTime() - Date.now();
+        const msUntilRefresh = msUntilExpire - 60000;
+
+        if (msUntilRefresh <= 0) return;
+
+        const timer = setTimeout(() => {
+            fetch(BASE_URL + "/api/v0/refresh", {
+                method: "POST",
+                credentials: "include",
+            }).then(async (resp) => {
+                if(resp.ok) {
+                    const authHeader = resp.headers.get("Authorization")
+                    const token = authHeader && authHeader.replace(/^Bearer\s+/i, '');
+                    
+                    if(!token) return;
+
+                    let bodyData: UserRequestDTO = await resp.json()
+                    setUsername(bodyData.data.username)
+                    setJWT(token)
+                    
+                    const jwtData = jwtDecode<JwtData>(token)
+                    setExpiry(new Date(jwtData.exp * 1000))
+                } else {
+                    setJWT("");
+                }
+            })
+        }, msUntilRefresh);
+
+        return () => clearTimeout(timer);
+    }, [jwt, expiry]);
     
     return (
         <AuthContext.Provider value= {{ username, jwt, expiry, isLoading:loading, setLoading: setLoading, setUsername: setUsername, setJWT: setJWT, setExpiry: setExpiry}}>
