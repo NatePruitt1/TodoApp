@@ -8,7 +8,12 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type ProjectRepository interface{}
+type ProjectRepository interface {
+	Create(project models.Project) error
+	Delete(projectId uuid.UUID) error
+	GetByID(projectId uuid.UUID) (models.Project, error)
+	GetAllUserProjects(userId uuid.UUID) ([]models.Project, error)
+}
 
 type ProjectRepositoryImpl struct {
 	db *pgxpool.Pool

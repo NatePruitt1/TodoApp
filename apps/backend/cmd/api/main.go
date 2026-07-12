@@ -3,6 +3,7 @@ package main
 import (
 	"backend/internal/config"
 	"backend/internal/handlers"
+	"backend/internal/middleware"
 	"backend/internal/repository"
 	"backend/internal/services"
 	"context"
@@ -54,10 +55,20 @@ func main() {
 	userService := services.NewUserService(userRepo, cfg)
 	userHandler := handlers.NewUserHandler(userService, tokenService)
 
+	projectRepo := repository.NewProjectRepository(pool)
+	projectService := services.NewProjectService(projectRepo)
+	projectHandler := handlers.NewProjectHandler(projectService)
+
 	api := router.Group("/api/v0")
 	api.POST("/create", userHandler.CreateAccountHandler)
 	api.POST("/login", userHandler.LoginHandler)
 	api.POST("/refresh", userHandler.RefreshHandler)
+
+	projApi := api.Group("/project")
+	projApi.Use(middleware.AuthMiddleware(cfg))
+
+	projApi.GET("/all", projectHandler.GetAllProjectsHandler)
+	projApi.POST("/add", projectHandler.AddProjectHandler)
 
 	fmt.Println("Running server on :8080")
 	router.Run(":8080")
