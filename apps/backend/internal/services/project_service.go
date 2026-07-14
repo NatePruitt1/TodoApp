@@ -11,15 +11,14 @@ import (
 )
 
 type ProjectService interface {
-	GetAllUserProjects(userId uuid.UUID) (dto.AllUserProjectsDTO, error)
+	GetProjects(userId uuid.UUID) (dto.ProjectListResponse, error)
+	GetProject(userId, projectId uuid.UUID) (dto.ProjectResponse, error)
 	DeleteProject(userId, projectId uuid.UUID) error
 	AddProject(userId uuid.UUID, name, description string) (dto.NewProjectResponseDTO, error)
 }
 
 type ProjectServiceImpl struct {
-	ProjectRepository  repository.ProjectRepository
-	CategoryRepository repository.CategoryRepository
-	CardRepository     repository.CardRepository
+	ProjectRepository repository.ProjectRepository
 }
 
 func NewProjectService(repo repository.ProjectRepository) ProjectService {
@@ -28,14 +27,24 @@ func NewProjectService(repo repository.ProjectRepository) ProjectService {
 	}
 }
 
-func (ps *ProjectServiceImpl) GetAllUserProjects(userId uuid.UUID) (dto.AllUserProjectsDTO, error) {
+func (ps *ProjectServiceImpl) GetProjects(userId uuid.UUID) (dto.ProjectListResponse, error) {
 	projects, err := ps.ProjectRepository.GetAllUserProjects(userId)
 	if err != nil {
-		return dto.AllUserProjectsDTO{}, err
+		return dto.ProjectListResponse{}, err
 	}
 
-	return dto.AllUserProjectsDTO{
-		Projects: projects,
+	projectList := make([]dto.ProjectListItem, len(projects))
+	for p := range projectList {
+		project := projects[p]
+		projectList[p] = dto.ProjectListItem{
+			ID:      project.ID,
+			OwnerID: project.OwnerID,
+			Name:    project.Name,
+		}
+	}
+
+	return dto.ProjectListResponse{
+		Projects: projectList,
 	}, nil
 }
 
@@ -58,7 +67,7 @@ func (ps *ProjectServiceImpl) AddProject(userId uuid.UUID, name, description str
 		return dto.NewProjectResponseDTO{}, err
 	}
 
-	exists := slices.ContainsFunc(projects, func(p models.Project) bool { return p.Name == name })
+	exists := slices.ContainsFunc(projects, func(p *models.Project) bool { return p.Name == name })
 	if exists {
 		return dto.NewProjectResponseDTO{}, errors.New("Project name taken.")
 	}
@@ -70,7 +79,7 @@ func (ps *ProjectServiceImpl) AddProject(userId uuid.UUID, name, description str
 		Description: description,
 	}
 
-	err = ps.ProjectRepository.Create(newProject)
+	err = ps.ProjectRepository.Save(&newProject)
 	if err != nil {
 		return dto.NewProjectResponseDTO{}, err
 	}
@@ -78,4 +87,17 @@ func (ps *ProjectServiceImpl) AddProject(userId uuid.UUID, name, description str
 	return dto.NewProjectResponseDTO{
 		Project: newProject,
 	}, nil
+}
+
+func (ps *ProjectServiceImpl) GetProject(userId, projectId uuid.UUID) (dto.ProjectResponse, error) {
+	project, err := ps.ProjectRepository.GetAggregate(projectId)
+	if err != nil {
+		return dto.ProjectResponse{}, err
+	}
+
+	if project.OwnerID != userId {
+		return dto.ProjectResponse{}, errors.New("User does not own project.")
+	}
+
+	return dto.NewProjectResponse(project), nil
 }

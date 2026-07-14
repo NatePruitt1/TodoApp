@@ -2,10 +2,41 @@ package dto
 
 import (
 	"backend/internal/models"
+
+	"github.com/google/uuid"
 )
 
-type AllUserProjectsDTO struct {
-	Projects []models.Project `json:"projects"`
+type ProjectResponse struct {
+	ID         uuid.UUID          `json:"id"`
+	OwnerID    uuid.UUID          `json:"owner_id"`
+	Name       string             `json:"name"`
+	Categories []CategoryResponse `json:"categories"`
+}
+
+type CategoryResponse struct {
+	ID        uuid.UUID      `json:"id"`
+	ProjectID uuid.UUID      `json:"project_id"`
+	Name      string         `json:"name"`
+	Index     int            `json:"index"`
+	Cards     []CardResponse `json:"cards"`
+}
+
+type CardResponse struct {
+	ID         uuid.UUID `json:"id"`
+	CategoryID uuid.UUID `json:"category_id"`
+	Title      string    `json:"title"`
+	Content    string    `json:"content"`
+	Finished   bool      `json:"finished"`
+}
+
+type ProjectListItem struct {
+	ID      uuid.UUID `json:"id"`
+	OwnerID uuid.UUID `json:"owner_id"`
+	Name    string    `json:"name"`
+}
+
+type ProjectListResponse struct {
+	Projects []ProjectListItem `json:"projects"`
 }
 
 type NewProjectResponseDTO struct {
