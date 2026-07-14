@@ -17,7 +17,9 @@ type ProjectService interface {
 }
 
 type ProjectServiceImpl struct {
-	ProjectRepository repository.ProjectRepository
+	ProjectRepository  repository.ProjectRepository
+	CategoryRepository repository.CategoryRepository
+	CardRepository     repository.CardRepository
 }
 
 func NewProjectService(repo repository.ProjectRepository) ProjectService {

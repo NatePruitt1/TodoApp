@@ -6,6 +6,7 @@ import Create from './components/auth/Create'
 import { AuthProvider } from './components/AuthContext'
 import Dashboard from './components/Dashboard'
 import { ProtectedNavigator } from './components/navigators/ProtectedNavigator'
+import { Project } from './components/Project'
 
 function App() {
   console.log("Hello!")
@@ -20,6 +21,7 @@ function App() {
           
           <Route element={<ProtectedNavigator />}>
             <Route path='/' element={<Dashboard />} />
+            <Route path='/projects' element={<Project />} />
           </Route>
         </Routes>
       </AuthProvider>

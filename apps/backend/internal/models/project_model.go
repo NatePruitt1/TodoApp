@@ -9,4 +9,5 @@ type Project struct {
 	OwnerID     uuid.UUID `json:"user_id"`
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
+	Categories  []*Category
 }

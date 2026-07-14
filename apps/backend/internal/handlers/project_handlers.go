@@ -3,6 +3,7 @@ package handlers
 import (
 	"backend/internal/dto"
 	"backend/internal/services"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -44,7 +45,9 @@ func (ph *ProjectHandlerImpl) GetAllProjectsHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusFound, gin.H{
+	fmt.Printf("Projects: %v\n", projects)
+
+	c.JSON(http.StatusAccepted, gin.H{
 		"status": "success",
 		"data":   projects,
 	})
