@@ -7,10 +7,11 @@ import (
 )
 
 type ProjectResponse struct {
-	ID         uuid.UUID          `json:"id"`
-	OwnerID    uuid.UUID          `json:"owner_id"`
-	Name       string             `json:"name"`
-	Categories []CategoryResponse `json:"categories"`
+	ID          uuid.UUID          `json:"id"`
+	OwnerID     uuid.UUID          `json:"owner_id"`
+	Name        string             `json:"name"`
+	Description string             `json:"description"`
+	Categories  []CategoryResponse `json:"categories"`
 }
 
 type CategoryResponse struct {
@@ -29,14 +30,8 @@ type CardResponse struct {
 	Finished   bool      `json:"finished"`
 }
 
-type ProjectListItem struct {
-	ID      uuid.UUID `json:"id"`
-	OwnerID uuid.UUID `json:"owner_id"`
-	Name    string    `json:"name"`
-}
-
 type ProjectListResponse struct {
-	Projects []ProjectListItem `json:"projects"`
+	Projects []ProjectResponse `json:"projects"`
 }
 
 type NewProjectResponseDTO struct {
@@ -56,4 +51,8 @@ type ProjectDTO struct {
 type CategoryDTO struct {
 	Category models.Category `json:"category"`
 	Cards    []models.Card   `json:"cards"`
+}
+
+type ProjectRequest struct {
+	ProjectId uuid.UUID `json:"id"`
 }

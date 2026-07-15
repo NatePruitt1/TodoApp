@@ -1,7 +1,6 @@
 package services
 
 import (
-	"backend/internal/dto"
 	"backend/internal/models"
 	"backend/internal/repository"
 	"errors"
@@ -11,10 +10,23 @@ import (
 )
 
 type ProjectService interface {
-	GetProjects(userId uuid.UUID) (dto.ProjectListResponse, error)
-	GetProject(userId, projectId uuid.UUID) (dto.ProjectResponse, error)
+	GetProjects(userId uuid.UUID) ([]*models.Project, error)
+	GetProject(userId, projectId uuid.UUID) (*models.Project, error)
 	DeleteProject(userId, projectId uuid.UUID) error
-	AddProject(userId uuid.UUID, name, description string) (dto.NewProjectResponseDTO, error)
+	AddProject(userId uuid.UUID, name, description string) (*models.Project, error)
+
+	// Category Services
+	AddCategory(projectId uuid.UUID, categoryName string) (*models.Category, error)
+	DeleteCategory(categoryId uuid.UUID) error
+	MoveCategory(categoryId uuid.UUID, index int) (*models.Category, error)
+	RenameCategory(categoryId uuid.UUID, name string) (*models.Category, error)
+
+	// Card Services
+	AddCard(categoryId uuid.UUID, name, content string) (*models.Card, error)
+	DeleteCard(cardId uuid.UUID) error
+	MoveCard(cardId, categoryId uuid.UUID) (*models.Card, error)
+	RenameCard(cardId uuid.UUID, name string) (*models.Card, error)
+	EditCard(cardId uuid.UUID, content string) (*models.Card, error)
 }
 
 type ProjectServiceImpl struct {
@@ -27,25 +39,13 @@ func NewProjectService(repo repository.ProjectRepository) ProjectService {
 	}
 }
 
-func (ps *ProjectServiceImpl) GetProjects(userId uuid.UUID) (dto.ProjectListResponse, error) {
+func (ps *ProjectServiceImpl) GetProjects(userId uuid.UUID) ([]*models.Project, error) {
 	projects, err := ps.ProjectRepository.GetAllUserProjects(userId)
 	if err != nil {
-		return dto.ProjectListResponse{}, err
+		return nil, err
 	}
 
-	projectList := make([]dto.ProjectListItem, len(projects))
-	for p := range projectList {
-		project := projects[p]
-		projectList[p] = dto.ProjectListItem{
-			ID:      project.ID,
-			OwnerID: project.OwnerID,
-			Name:    project.Name,
-		}
-	}
-
-	return dto.ProjectListResponse{
-		Projects: projectList,
-	}, nil
+	return projects, nil
 }
 
 func (ps *ProjectServiceImpl) DeleteProject(userId, projectId uuid.UUID) error {
@@ -61,15 +61,15 @@ func (ps *ProjectServiceImpl) DeleteProject(userId, projectId uuid.UUID) error {
 	return ps.ProjectRepository.Delete(projectId)
 }
 
-func (ps *ProjectServiceImpl) AddProject(userId uuid.UUID, name, description string) (dto.NewProjectResponseDTO, error) {
+func (ps *ProjectServiceImpl) AddProject(userId uuid.UUID, name, description string) (*models.Project, error) {
 	projects, err := ps.ProjectRepository.GetAllUserProjects(userId)
 	if err != nil {
-		return dto.NewProjectResponseDTO{}, err
+		return nil, err
 	}
 
 	exists := slices.ContainsFunc(projects, func(p *models.Project) bool { return p.Name == name })
 	if exists {
-		return dto.NewProjectResponseDTO{}, errors.New("Project name taken.")
+		return nil, errors.New("Project name taken.")
 	}
 
 	newProject := models.Project{
@@ -81,23 +81,21 @@ func (ps *ProjectServiceImpl) AddProject(userId uuid.UUID, name, description str
 
 	err = ps.ProjectRepository.Save(&newProject)
 	if err != nil {
-		return dto.NewProjectResponseDTO{}, err
+		return nil, err
 	}
 
-	return dto.NewProjectResponseDTO{
-		Project: newProject,
-	}, nil
+	return &newProject, nil
 }
 
-func (ps *ProjectServiceImpl) GetProject(userId, projectId uuid.UUID) (dto.ProjectResponse, error) {
+func (ps *ProjectServiceImpl) GetProject(userId, projectId uuid.UUID) (*models.Project, error) {
 	project, err := ps.ProjectRepository.GetAggregate(projectId)
 	if err != nil {
-		return dto.ProjectResponse{}, err
+		return nil, err
 	}
 
 	if project.OwnerID != userId {
-		return dto.ProjectResponse{}, errors.New("User does not own project.")
+		return nil, errors.New("User does not own project.")
 	}
 
-	return dto.NewProjectResponse(project), nil
+	return project, nil
 }
