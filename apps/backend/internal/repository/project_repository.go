@@ -199,7 +199,7 @@ func (ur *ProjectRepositoryImpl) GetCategoriesForProject(projectId uuid.UUID) ([
 		SELECT id, project_id, category_name, index
 		FROM categories
 		WHERE project_id = $1
-		ORDER_BY index ASC
+		ORDER BY index ASC
 	`
 
 	rows, err := ur.db.Query(context.Background(), q, projectId)
