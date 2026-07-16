@@ -3,6 +3,7 @@ package handlers
 import (
 	"backend/internal/dto"
 	"backend/internal/services"
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -10,16 +11,17 @@ import (
 )
 
 type ProjectHandler interface {
-	GetProjectsHandler(c *gin.Context)
-	DeleteProjectHandler(c *gin.Context)
-	AddProjectHandler(c *gin.Context)
-	GetProjectHandler(c *gin.Context)
+	GetProjects(c *gin.Context)
+	GetProject(c *gin.Context)
+	DeleteProject(c *gin.Context)
+	AddProject(c *gin.Context)
+	UpdateProject(c *gin.Context)
 
 	// Category Handlers
 	AddCategory(c *gin.Context)
+	UpdateCategory(c *gin.Context)
 	DeleteCategory(c *gin.Context)
 	MoveCategory(c *gin.Context)
-	RemameCategory(c *gin.Context)
 
 	// Card Handlers
 	AddCard(c *gin.Context)
@@ -40,48 +42,79 @@ func NewProjectHandler(service services.ProjectService) ProjectHandler {
 	}
 }
 
-func (ph *ProjectHandlerImpl) GetProjectHandler(c *gin.Context) {
-	var projectRequest dto.ProjectRequest
+func getProjectId(c *gin.Context) (uuid.UUID, error) {
+	projectId := c.Param("projectid")
+	if projectId == "" {
+		return uuid.Nil, errors.New("no project ID parameter provided.")
+	}
 
+	projectUUID, err := uuid.Parse(projectId)
+	if err != nil {
+		return uuid.Nil, errors.New("project ID provided invalid.")
+	}
+
+	return projectUUID, nil
+}
+
+func getCategoryId(c *gin.Context) (uuid.UUID, error) {
+	categoryId := c.Param("categoryid")
+	if categoryId == "" {
+		return uuid.Nil, errors.New("no category ID parameter provided.")
+	}
+
+	categoryUUID, err := uuid.Parse(categoryId)
+	if err != nil {
+		return uuid.Nil, errors.New("category ID provided invalid.")
+	}
+
+	return categoryUUID, nil
+}
+
+func getUserId(c *gin.Context) (uuid.UUID, error) {
 	userId := c.GetString("user_id")
 	if userId == "" {
-		c.JSON(http.StatusUnauthorized, dto.BadRequestError("No userid provided.", ""))
-		return
+		return uuid.Nil, errors.New("no user ID provided.")
 	}
 
 	userUUID, err := uuid.Parse(userId)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, dto.BadRequestError("Invalid userid provided.", err.Error()))
+		return uuid.Nil, errors.New("invalid user ID provided.")
+	}
+
+	return userUUID, nil
+}
+
+func (ph *ProjectHandlerImpl) GetProject(c *gin.Context) {
+	userUUID, err := getUserId(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, dto.BadRequestError("failed to retrieve user id.", err.Error()))
 		return
 	}
 
-	if err = c.ShouldBindJSON(&projectRequest); err != nil {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError("Bad request body.", err.Error()))
+	projectUUID, err := getProjectId(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.BadRequestError("failed to retrieve project id", err.Error()))
 		return
 	}
 
-	project, err := ph.ProjectService.GetProject(userUUID, projectRequest.ProjectId)
+	project, err := ph.ProjectService.GetProject(userUUID, projectUUID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, dto.BadRequestError("Failed to get project.", err.Error()))
 		return
 	}
 
+	projectResp := dto.NewProjectResponse(project)
+
 	c.JSON(http.StatusAccepted, gin.H{
 		"status": "success",
-		"data":   project,
+		"data":   projectResp,
 	})
 }
 
-func (ph *ProjectHandlerImpl) GetProjectsHandler(c *gin.Context) {
-	userId := c.GetString("user_id")
-	if userId == "" {
-		c.JSON(http.StatusUnauthorized, dto.BadRequestError("No userid provided.", ""))
-		return
-	}
-
-	userUUID, err := uuid.Parse(userId)
+func (ph *ProjectHandlerImpl) GetProjects(c *gin.Context) {
+	userUUID, err := getUserId(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, dto.BadRequestError("Invalid userid provided.", err.Error()))
+		c.JSON(http.StatusUnauthorized, dto.BadRequestError("failed to retrieve user id.", err.Error()))
 		return
 	}
 
@@ -105,27 +138,19 @@ func (ph *ProjectHandlerImpl) GetProjectsHandler(c *gin.Context) {
 	})
 }
 
-func (ph *ProjectHandlerImpl) DeleteProjectHandler(c *gin.Context) {
-	var req dto.ProjectRequest
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError("Bad request body.", err.Error()))
-		return
-	}
-
-	userId := c.GetString("user_id")
-	if userId == "" {
-		c.JSON(http.StatusUnauthorized, dto.BadRequestError("No userid provided.", ""))
-		return
-	}
-
-	userUUID, err := uuid.Parse(userId)
+func (ph *ProjectHandlerImpl) DeleteProject(c *gin.Context) {
+	userUUID, err := getUserId(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, dto.BadRequestError("Invalid userid provided.", err.Error()))
+		c.JSON(http.StatusUnauthorized, dto.BadRequestError("failed to retrieve user id.", err.Error()))
 		return
 	}
 
-	err = ph.ProjectService.DeleteProject(userUUID, req.ProjectId)
+	projectUUID, err := getProjectId(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.BadRequestError("Error retrieving project id.", err.Error()))
+	}
+
+	err = ph.ProjectService.DeleteProject(userUUID, projectUUID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.BadRequestError("Failed to delete project.", err.Error()))
 		return
@@ -134,23 +159,17 @@ func (ph *ProjectHandlerImpl) DeleteProjectHandler(c *gin.Context) {
 	c.Status(http.StatusAccepted)
 }
 
-func (ph *ProjectHandlerImpl) AddProjectHandler(c *gin.Context) {
-	var req dto.NewProjectRequestDTO
+func (ph *ProjectHandlerImpl) AddProject(c *gin.Context) {
+	var req dto.ProjectRequest
 
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError("Bad request body.", err.Error()))
-		return
-	}
-
-	userId := c.GetString("user_id")
-	if userId == "" {
-		c.JSON(http.StatusUnauthorized, dto.BadRequestError("No userid provided.", ""))
-		return
-	}
-
-	userUUID, err := uuid.Parse(userId)
+	userUUID, err := getUserId(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, dto.BadRequestError("Invalid userid provided.", err.Error()))
+		c.JSON(http.StatusUnauthorized, dto.BadRequestError("failed to retrieve user id.", err.Error()))
+		return
+	}
+
+	if err = c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusInternalServerError, dto.BadRequestError("failed to parse request.", err.Error()))
 		return
 	}
 
@@ -166,4 +185,8 @@ func (ph *ProjectHandlerImpl) AddProjectHandler(c *gin.Context) {
 		"status": "success",
 		"data":   resp,
 	})
+}
+
+func (ph *ProjectHandlerImpl) UpdateProject(c *gin.Context) {
+
 }

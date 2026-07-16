@@ -40,7 +40,7 @@ func (u *UserServiceImpl) AuthenticateAccount(ctx context.Context, username, pas
 	}
 
 	if e := bcrypt.CompareHashAndPassword([]byte(uret.PasswordHash), []byte(password)); e != nil {
-		return dto.LoginResponseDTO{}, "", err
+		return dto.LoginResponseDTO{}, "", e
 	}
 
 	token, e := GenerateToken(uret, u.config.JwtSecret)

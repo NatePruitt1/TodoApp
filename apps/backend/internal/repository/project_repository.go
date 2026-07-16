@@ -17,18 +17,21 @@ type ProjectRepository interface {
 	GetAllUserProjects(userId uuid.UUID) ([]*models.Project, error)
 	GetAggregate(project uuid.UUID) (*models.Project, error)
 	Save(project *models.Project) error
+	CheckProjectOwner(projectId, userId uuid.UUID) error
 
 	// Category CRUD
 	DeleteCategory(catId uuid.UUID) error
 	GetCategoryByID(catId uuid.UUID) (*models.Category, error)
 	GetCategoriesForProject(projectId uuid.UUID) ([]*models.Category, error)
 	SaveCategory(category *models.Category) error
+	CheckCategoryOwner(catId, userId uuid.UUID) error
 
 	// Card CRUD
 	DeleteCard(cardId uuid.UUID) error
 	GetCardByID(cardId uuid.UUID) (*models.Card, error)
 	GetCardsForCategory(categoryId uuid.UUID) ([]*models.Card, error)
 	SaveCard(card *models.Card) error
+	CheckCardOwner(cardId, userId uuid.UUID) error
 }
 
 type ProjectRepositoryImpl struct {
@@ -264,6 +267,44 @@ func (ur *ProjectRepositoryImpl) SaveCategory(category *models.Category) error {
 	return err
 }
 
+func (ur *ProjectRepositoryImpl) CheckProjectOwner(projectId, userId uuid.UUID) error {
+	const q = `
+		SELECT owner_id FROM projects WHERE id = $1
+	`
+
+	var ownerId uuid.UUID
+	err := ur.db.QueryRow(context.Background(), q, projectId).Scan(&ownerId)
+
+	if err != nil {
+		return err
+	}
+
+	if ownerId != userId {
+		return errors.New("User does not own project.")
+	}
+
+	return nil
+}
+
+func (ur *ProjectRepositoryImpl) CheckCategoryOwner(catId, userId uuid.UUID) error {
+	const q = `
+		SELECT p.owner_id FROM categories c JOIN projects p ON p.id = c.project_id where c.id = $1
+	`
+
+	var ownerId uuid.UUID
+	err := ur.db.QueryRow(context.Background(), q, catId).Scan(&ownerId)
+
+	if err != nil {
+		return err
+	}
+
+	if ownerId != userId {
+		return errors.New("User does not own category.")
+	}
+
+	return nil
+}
+
 func (ur *ProjectRepositoryImpl) DeleteCard(cardId uuid.UUID) error {
 	const q = `
 		DELETE FROM cards
@@ -363,4 +404,26 @@ func (ur *ProjectRepositoryImpl) SaveCard(card *models.Card) error {
 	}
 
 	return err
+}
+
+func (ur *ProjectRepositoryImpl) CheckCardOwner(cardId, userId uuid.UUID) error {
+	const q = `
+		SELECT p.owner_id FROM cards ca
+		JOIN categories c ON c.id = ca.category_id
+		JOIN projects p ON p.id = c.project_id
+		WHERE ca.id = $1
+	`
+
+	var ownerId uuid.UUID
+	err := ur.db.QueryRow(context.Background(), q, cardId).Scan(&ownerId)
+
+	if err != nil {
+		return err
+	}
+
+	if ownerId != userId {
+		return errors.New("User does not own card.")
+	}
+
+	return nil
 }

@@ -29,6 +29,8 @@ func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
 		token, err := services.ParseToken(authHeaderParts[1], cfg.JwtSecret)
 		if err != nil {
 			ctx.JSON(http.StatusUnauthorized, dto.BadRequestError("Invalid token.", err.Error()))
+			ctx.Abort()
+			return
 		}
 
 		ctx.Set("user_id", token.UserID)

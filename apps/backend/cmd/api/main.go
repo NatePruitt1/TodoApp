@@ -27,7 +27,7 @@ func main() {
 
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:5173", "http://127.0.0.1:5173"},
-		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
+		AllowMethods:     []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length", "Authorization"},
 		AllowCredentials: true,
@@ -60,15 +60,34 @@ func main() {
 	projectHandler := handlers.NewProjectHandler(projectService)
 
 	api := router.Group("/api/v0")
-	api.POST("/create", userHandler.CreateAccountHandler)
-	api.POST("/login", userHandler.LoginHandler)
-	api.POST("/refresh", userHandler.RefreshHandler)
 
-	projApi := api.Group("/project")
-	projApi.Use(middleware.AuthMiddleware(cfg))
+	// Auth Endpoints - Public
+	api.POST("/auth/register", userHandler.CreateAccountHandler)
+	api.POST("/auth/login", userHandler.LoginHandler)
+	api.POST("/auth/refresh", userHandler.RefreshHandler)
 
-	projApi.GET("/all", projectHandler.GetAllProjectsHandler)
-	projApi.POST("/add", projectHandler.AddProjectHandler)
+	// Auth Endpoints - Authenticated
+	authGroup := api.Group("", middleware.AuthMiddleware(cfg))
+
+	// Project Endpoints
+	authGroup.GET("/projects", projectHandler.GetProjects)
+	authGroup.POST("/projects", projectHandler.AddProject)
+	authGroup.GET("/projects/:projectid", projectHandler.GetProject)
+	authGroup.PATCH("/projects/:projectid", projectHandler.UpdateProject)
+	authGroup.DELETE("/projects/:projectid", projectHandler.DeleteProject)
+
+	// Category Endpoints
+	authGroup.POST("/projects/:projectid/categories", projectHandler.AddCategory)
+	authGroup.PATCH("/categories/:categoryid", projectHandler.UpdateCategory)
+	authGroup.DELETE("/categories/:categoryid", projectHandler.DeleteCategory)
+	authGroup.PATCH("/categories/:categoryid/position", projectHandler.MoveCategory)
+
+	// Card Endpoints
+	authGroup.POST("/categories/:categoryid/cards", projectHandler.AddCard)
+	authGroup.PATCH("/cards/:cardid", projectHandler.RenameCard)
+	authGroup.DELETE("/cards/:cardid", projectHandler.DeleteCard)
+	authGroup.PATCH("/cards/:cardid/move", projectHandler.MoveCard)
+	authGroup.PATCH("/cards/:cardid/finish", projectHandler.FinishCard)
 
 	fmt.Println("Running server on :8080")
 	router.Run(":8080")

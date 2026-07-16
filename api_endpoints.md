@@ -9,22 +9,22 @@ This document lists the endpoint set discussed for a simple frontend-friendly AP
 ## Auth Endpoints
 These are typically public except where noted.
 
-| Method | Path | Auth | Purpose |
-|---|---|---|---|
-| POST | `/auth/register` | No | Create account |
-| POST | `/auth/login` | No | Sign in and return auth token |
-| POST | `/auth/refresh` | No (uses refresh cookie/token flow) | Issue new auth token |
-| POST | `/auth/logout` | Yes | Invalidate session/refresh token |
-| GET | `/auth/me` | Yes | Return current user profile |
+| Method | Path             | Auth                                | Purpose                          |
+| ------ | ---------------- | ----------------------------------- | -------------------------------- |
+| POST   | `/auth/register` | No                                  | Create account                   |
+| POST   | `/auth/login`    | No                                  | Sign in and return auth token    |
+| POST   | `/auth/refresh`  | No (uses refresh cookie/token flow) | Issue new auth token             |
+| POST   | `/auth/logout`   | Yes                                 | Invalidate session/refresh token |
+| GET    | `/auth/me`       | Yes                                 | Return current user profile      |
 
 ## Project Endpoints
-| Method | Path | Auth | Purpose |
-|---|---|---|---|
-| GET | `/projects` | Yes | List user projects |
-| POST | `/projects` | Yes | Create project |
-| GET | `/projects/:projectId` | Yes | Get project board aggregate (project + categories + cards) |
-| PATCH | `/projects/:projectId` | Yes | Update project name/description |
-| DELETE | `/projects/:projectId` | Yes | Delete project |
+| Method | Path                   | Auth | Purpose                                                    |
+| ------ | ---------------------- | ---- | ---------------------------------------------------------- |
+| GET    | `/projects`            | Yes  | List user projects                                         |
+| POST   | `/projects`            | Yes  | Create project                                             |
+| GET    | `/projects/:projectId` | Yes  | Get project board aggregate (project + categories + cards) |
+| PATCH  | `/projects/:projectId` | Yes  | Update project name/description                            |
+| DELETE | `/projects/:projectId` | Yes  | Delete project                                             |
 
 ### Suggested payloads
 - `POST /projects`
@@ -44,13 +44,12 @@ These are typically public except where noted.
 ```
 
 ## Category Endpoints
-| Method | Path | Auth | Purpose |
-|---|---|---|---|
-| POST | `/projects/:projectId/categories` | Yes | Create category in project |
-| GET | `/projects/:projectId/categories` | Yes | List categories for project |
-| PATCH | `/categories/:categoryId` | Yes | Update category fields (for example name) |
-| DELETE | `/categories/:categoryId` | Yes | Delete category |
-| PATCH | `/categories/:categoryId/position` | Yes | Reorder category |
+| Method | Path                               | Auth | Purpose                                   |
+| ------ | ---------------------------------- | ---- | ----------------------------------------- |
+| POST   | `/projects/:projectId/categories`  | Yes  | Create category in project                |
+| PATCH  | `/categories/:categoryId`          | Yes  | Update category fields (for example name) |
+| DELETE | `/categories/:categoryId`          | Yes  | Delete category                           |
+| PATCH  | `/categories/:categoryId/position` | Yes  | Reorder category                          |
 
 ### Suggested payloads
 - `POST /projects/:projectId/categories`
@@ -75,15 +74,13 @@ These are typically public except where noted.
 ```
 
 ## Card Endpoints
-| Method | Path | Auth | Purpose |
-|---|---|---|---|
-| POST | `/categories/:categoryId/cards` | Yes | Create card in category |
-| GET | `/categories/:categoryId/cards` | Yes | List cards in category |
-| GET | `/cards/:cardId` | Yes | Get single card |
-| PATCH | `/cards/:cardId` | Yes | Update card fields (title/content) |
-| DELETE | `/cards/:cardId` | Yes | Delete card |
-| PATCH | `/cards/:cardId/move` | Yes | Move card to another category and/or index |
-| PATCH | `/cards/:cardId/finish` | Yes | Toggle finished status |
+| Method | Path                            | Auth | Purpose                                    |
+| ------ | ------------------------------- | ---- | ------------------------------------------ |
+| POST   | `/categories/:categoryId/cards` | Yes  | Create card in category                    |
+| PATCH  | `/cards/:cardId`                | Yes  | Update card fields (title/content)         |
+| DELETE | `/cards/:cardId`                | Yes  | Delete card                                |
+| PATCH  | `/cards/:cardId/move`           | Yes  | Move card to another category and/or index |
+| PATCH  | `/cards/:cardId/finish`         | Yes  | Toggle finished status                     |
 
 ### Suggested payloads
 - `POST /categories/:categoryId/cards`

@@ -14,19 +14,24 @@ type ProjectService interface {
 	GetProject(userId, projectId uuid.UUID) (*models.Project, error)
 	DeleteProject(userId, projectId uuid.UUID) error
 	AddProject(userId uuid.UUID, name, description string) (*models.Project, error)
+	CheckProjectOwner(projectId, userId uuid.UUID) error
 
 	// Category Services
+	GetCategory(categoryId uuid.UUID) (*models.Category, error)
 	AddCategory(projectId uuid.UUID, categoryName string) (*models.Category, error)
 	DeleteCategory(categoryId uuid.UUID) error
 	MoveCategory(categoryId uuid.UUID, index int) (*models.Category, error)
 	RenameCategory(categoryId uuid.UUID, name string) (*models.Category, error)
+	CheckCategoryOwner(categoryId, userId uuid.UUID) error
 
 	// Card Services
+	GetCard(cardId uuid.UUID) (*models.Card, error)
 	AddCard(categoryId uuid.UUID, name, content string) (*models.Card, error)
 	DeleteCard(cardId uuid.UUID) error
 	MoveCard(cardId, categoryId uuid.UUID) (*models.Card, error)
 	RenameCard(cardId uuid.UUID, name string) (*models.Card, error)
 	EditCard(cardId uuid.UUID, content string) (*models.Card, error)
+	CheckCardOwner(cardId, userId uuid.UUID) error
 }
 
 type ProjectServiceImpl struct {
@@ -98,4 +103,8 @@ func (ps *ProjectServiceImpl) GetProject(userId, projectId uuid.UUID) (*models.P
 	}
 
 	return project, nil
+}
+
+func (ps *ProjectServiceImpl) CheckProjectOwner(projectId, userId uuid.UUID) error {
+	return ps.ProjectRepository.CheckProjectOwner(projectId, userId)
 }

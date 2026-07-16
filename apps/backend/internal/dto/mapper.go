@@ -49,11 +49,3 @@ func NewCardResponse(card *models.Card) CardResponse {
 		Finished:   card.Finished,
 	}
 }
-
-func NewProjectListItem(project *models.Project) ProjectListItem {
-	return ProjectListItem{
-		ID:      project.ID,
-		OwnerID: project.OwnerID,
-		Name:    project.Name,
-	}
-}

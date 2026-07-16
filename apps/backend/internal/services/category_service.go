@@ -7,6 +7,14 @@ import (
 	"github.com/google/uuid"
 )
 
+func (ps *ProjectServiceImpl) CheckCategoryOwner(categoryId, userId uuid.UUID) error {
+	return ps.ProjectRepository.CheckCategoryOwner(categoryId, userId)
+}
+
+func (ps *ProjectServiceImpl) GetCategory(categoryId uuid.UUID) (*models.Category, error) {
+	return ps.ProjectRepository.GetCategoryByID(categoryId)
+}
+
 func (ps *ProjectServiceImpl) AddCategory(projectId uuid.UUID, categoryName string) (*models.Category, error) {
 	project, err := ps.ProjectRepository.GetAggregate(projectId)
 	if err != nil {
@@ -31,11 +39,11 @@ func (ps *ProjectServiceImpl) AddCategory(projectId uuid.UUID, categoryName stri
 }
 
 func (ps *ProjectServiceImpl) DeleteCategory(categoryId uuid.UUID) error {
-	return ps.DeleteCategory(categoryId)
+	return ps.ProjectRepository.Delete(categoryId)
 }
 
 func (ps *ProjectServiceImpl) MoveCategory(categoryId uuid.UUID, index int) (*models.Category, error) {
-	category, err := ps.ProjectRepository.GetCategory(categoryId)
+	category, err := ps.ProjectRepository.GetCategoryByID(categoryId)
 	if err != nil {
 		return nil, err
 	}
@@ -53,10 +61,24 @@ func (ps *ProjectServiceImpl) MoveCategory(categoryId uuid.UUID, index int) (*mo
 		}
 
 		category.Index = index
-		ps.ProjectRepository.Save(category)
+		ps.ProjectRepository.SaveCategory(category)
 
 		return category, nil
 	} else {
 		return nil, errors.New("Index is outside of bounds.")
 	}
+}
+
+func (ps *ProjectServiceImpl) RenameCategory(categoryId uuid.UUID, name string) (*models.Category, error) {
+	category, err := ps.ProjectRepository.GetCategoryByID(categoryId)
+	if err != nil {
+		return nil, err
+	}
+
+	category.Name = name
+	err = ps.ProjectRepository.SaveCategory(category)
+	if err != nil {
+		return nil, err
+	}
+	return category, nil
 }
