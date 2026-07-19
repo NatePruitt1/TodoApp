@@ -4,12 +4,13 @@ import (
 	"backend/internal/dto"
 	"backend/internal/services"
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-const RTOKEN_PATH = "/api/v0/refresh"
+const RTOKEN_PATH = "/api/v0/auth/refresh"
 
 // UserHandler interface allows DI for the user handler functionality.
 type UserHandler interface {
@@ -134,6 +135,8 @@ func (uh *UserHandlerImpl) RefreshHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, dto.BadRequestError("No refresh token provided.", ""))
 		return
 	}
+
+	fmt.Printf("Raw refresh token: %s\n", raw)
 
 	_, err = uh.RefreshTokenService.CheckToken(raw)
 	if err != nil {

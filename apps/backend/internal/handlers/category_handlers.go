@@ -132,6 +132,10 @@ func (ph *ProjectHandlerImpl) MoveCategory(c *gin.Context) {
 	}
 
 	cat, err := ph.ProjectService.MoveCategory(catergoryUUID, req.Index)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.BadRequestError("failed to move category.", err.Error()))
+		return
+	}
 	resp := dto.NewCategoryResponse(cat)
 
 	c.JSON(http.StatusAccepted, gin.H{

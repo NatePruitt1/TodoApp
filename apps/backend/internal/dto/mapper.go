@@ -14,10 +14,11 @@ func NewProjectResponse(project *models.Project) ProjectResponse {
 	}
 
 	return ProjectResponse{
-		ID:         project.ID,
-		OwnerID:    project.OwnerID,
-		Name:       project.Name,
-		Categories: categories,
+		ID:          project.ID,
+		Description: project.Description,
+		OwnerID:     project.OwnerID,
+		Name:        project.Name,
+		Categories:  categories,
 	}
 }
 

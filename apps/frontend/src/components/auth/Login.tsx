@@ -26,7 +26,7 @@ function Login() {
 
         try {
             console.log(BASE_URL)
-            let resp = await fetch(BASE_URL + "/api/v0/login",
+            let resp = await fetch(BASE_URL + "/api/v0/auth/login",
                 {
                     method: "POST",
                     body: JSON.stringify(formData),

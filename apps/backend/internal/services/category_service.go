@@ -3,6 +3,7 @@ package services
 import (
 	"backend/internal/models"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 )
@@ -39,7 +40,7 @@ func (ps *ProjectServiceImpl) AddCategory(projectId uuid.UUID, categoryName stri
 }
 
 func (ps *ProjectServiceImpl) DeleteCategory(categoryId uuid.UUID) error {
-	return ps.ProjectRepository.Delete(categoryId)
+	return ps.ProjectRepository.DeleteCategory(categoryId)
 }
 
 func (ps *ProjectServiceImpl) MoveCategory(categoryId uuid.UUID, index int) (*models.Category, error) {
@@ -53,17 +54,28 @@ func (ps *ProjectServiceImpl) MoveCategory(categoryId uuid.UUID, index int) (*mo
 		return nil, err
 	}
 
-	// Check if the index is < len project.categories
-	if index < len(project.Categories) {
-		for c := index; c < len(project.Categories); c += 1 {
-			project.Categories[c].Index += 1
-			ps.ProjectRepository.SaveCategory(project.Categories[c])
+	fmt.Printf("Category Index: %d\n", category.Index)
+
+	//Check if new index is valid.
+	if index >= 0 && index < len(project.Categories) {
+		element := project.Categories[category.Index]
+
+		if element.Index < index {
+			copy(project.Categories[element.Index:index], project.Categories[element.Index+1:index+1])
+		} else {
+			copy(project.Categories[index+1:element.Index+1], project.Categories[index:element.Index])
 		}
 
-		category.Index = index
-		ps.ProjectRepository.SaveCategory(category)
+		project.Categories[index] = element
 
-		return category, nil
+		for c := range project.Categories {
+			if project.Categories[c].Index != c {
+				project.Categories[c].Index = c
+				ps.ProjectRepository.SaveCategory(project.Categories[c])
+			}
+		}
+
+		return element, nil
 	} else {
 		return nil, errors.New("Index is outside of bounds.")
 	}

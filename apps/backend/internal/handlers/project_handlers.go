@@ -4,6 +4,7 @@ import (
 	"backend/internal/dto"
 	"backend/internal/services"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -129,6 +130,8 @@ func (ph *ProjectHandlerImpl) GetProjects(c *gin.Context) {
 	}
 	for p := range projects {
 		project := projects[p]
+		fmt.Printf("Description of project: %s\n", project.Description)
+
 		projectList.Projects[p] = dto.NewProjectResponse(project)
 	}
 

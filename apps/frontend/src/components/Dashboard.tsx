@@ -23,7 +23,7 @@ function Dashboard() {
 
     const loadProjects = () => {
         const status = requireAuth(authContext)
-        fetch(BASE_URL + "/api/v0/project/all", {
+        fetch(BASE_URL + "/api/v0/projects", {
             method: "GET",
             headers: {
                 "Authorization": "Bearer " + status.jwt
@@ -46,7 +46,7 @@ function Dashboard() {
         try {
             
             const status = requireAuth(authContext)
-            const resp = await fetch(BASE_URL + "/api/v0/project/add", {
+            const resp = await fetch(BASE_URL + "/api/v0/projects", {
                 method: "POST",
                 headers: {
                     "Authorization": "Bearer " + status.jwt
@@ -58,6 +58,7 @@ function Dashboard() {
                 // Reload all projects
                 setNewProjectFormData({name: "", description: ""})
                 loadProjects()
+                console.log(await resp.json())
             } else {
                 alert("Failed to create project!")
             }
