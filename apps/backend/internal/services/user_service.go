@@ -15,6 +15,12 @@ import (
 
 var ErrUsernameTaken = errors.New("Username taken.")
 
+// dummyPasswordHash is a valid bcrypt hash (of an arbitrary password) used to
+// perform a dummy comparison when a username lookup fails. This ensures the
+// "user not found" path takes roughly the same amount of time as the
+// "wrong password" path, mitigating username-enumeration via timing attacks.
+const dummyPasswordHash = "$2a$10$iFc4Bhptv3kbZ7jFJq0EV.pCjZRva7nw1FD6ZyI55sNwWiMyRm9re"
+
 type UserService interface {
 	CreateAccount(ctx context.Context, username, password string) (dto.LoginResponseDTO, string, error)
 	AuthenticateAccount(ctx context.Context, username, password string) (dto.LoginResponseDTO, string, error)
@@ -36,6 +42,7 @@ func NewUserService(repository *repository.UserRepositoryImpl, cfg *config.Confi
 func (u *UserServiceImpl) AuthenticateAccount(ctx context.Context, username, password string) (dto.LoginResponseDTO, string, error) {
 	uret, err := u.repo.GetByUsername(username)
 	if err != nil {
+		bcrypt.CompareHashAndPassword([]byte(dummyPasswordHash), []byte(password))
 		return dto.LoginResponseDTO{}, "", err
 	}
 
