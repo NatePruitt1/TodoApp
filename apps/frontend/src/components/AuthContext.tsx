@@ -30,7 +30,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         if(!refreshSent.current) {
             refreshSent.current = true;
             setLoading(true)
-            fetch(BASE_URL + "/api/v0/auth/refresh", {
+            fetch(BASE_URL + "/auth/refresh", {
                 method: "POST",
                 credentials: "include",
             }).then(async (resp) => {
@@ -62,7 +62,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         if (msUntilRefresh <= 0) return;
 
         const timer = setTimeout(() => {
-            fetch(BASE_URL + "/api/v0/auth/refresh", {
+            fetch(BASE_URL + "/auth/refresh", {
                 method: "POST",
                 credentials: "include",
             }).then(async (resp) => {

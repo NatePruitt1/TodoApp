@@ -26,7 +26,7 @@ function Create() {
     
             try {
                 console.log(BASE_URL)
-                let resp = await fetch(BASE_URL + "/api/v0/auth/register",
+                let resp = await fetch(BASE_URL + "/auth/register",
                     {
                         method: "POST",
                         body: JSON.stringify(formData)

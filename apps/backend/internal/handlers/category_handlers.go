@@ -102,7 +102,7 @@ func (ph *ProjectHandlerImpl) DeleteCategory(c *gin.Context) {
 		return
 	}
 
-	c.Status(http.StatusAccepted)
+	c.Status(http.StatusNoContent)
 }
 
 func (ph *ProjectHandlerImpl) MoveCategory(c *gin.Context) {

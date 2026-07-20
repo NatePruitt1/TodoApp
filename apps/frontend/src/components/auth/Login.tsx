@@ -25,8 +25,7 @@ function Login() {
         event.preventDefault();
 
         try {
-            console.log(BASE_URL)
-            let resp = await fetch(BASE_URL + "/api/v0/auth/login",
+            let resp = await fetch(BASE_URL + "/auth/login",
                 {
                     method: "POST",
                     body: JSON.stringify(formData),

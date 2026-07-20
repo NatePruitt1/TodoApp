@@ -1,43 +1,37 @@
-import { useLocation } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import type { Project } from "../types/Project";
 import { useEffect, useState } from "react";
-import { requireAuth } from "../utils/Auth";
-import { useAuth } from "./AuthContext";
 import { CategoryCard } from "./Category";
+import { useProjectsApi } from "../api/projects";
+import { useCategoriesApi } from "../api/categories";
 
-const BASE_URL = import.meta.env.VITE_API_URL
 
 interface ProjectState {
     project: Project
 }
 
-export function Project() {
-    const authContext = useAuth();
+export function ProjectScreen() {
+    const projectApi = useProjectsApi();
+    const categoriesApi = useCategoriesApi();
+
     const location = useLocation();
+    const navigate = useNavigate();
     const state: ProjectState = location.state || {}
     const [formData, setFormData]= useState({name: ""});
     
-    const [project, setProject] = useState<Project>();
+    const [project, setProject] = useState<Project>(state.project);
 
     const getProject = async () => {
-        const status = requireAuth(authContext)
-        const resp = await fetch(BASE_URL + "/api/v0/projects/" + state.project.id, {
-            method: "GET",
-            headers: {
-                "Authorization": "Bearer " + status.jwt
-            }
-        })
-
-        if(resp.ok) {
-            const respData = await resp.json()
-            const proj = respData.data as Project
+        try {
+            const proj = await projectApi.get(state.project.id)
             if(proj.categories && proj.categories.length > 0) {
                 proj.categories.sort((a, b) => a.index - b.index)
             }
             setProject(proj)
-        } else {
-            alert("Could not load project!")
-            console.log(await resp.json())
+        } catch (error) {
+            console.error(error)
+            alert("Could not load project from api.")
+            navigate("/dashboard", {replace: true})
         }
     }
 
@@ -56,27 +50,11 @@ export function Project() {
     const addCategory = async (event: React.SubmitEvent<HTMLFormElement>) => {
         event.preventDefault();
         try {
-            
-            const status = requireAuth(authContext)
-            const path = '/api/v0/projects/' + state.project.id + '/categories'
-            const resp = await fetch(BASE_URL + path, {
-                method: "POST",
-                headers: {
-                    "Authorization": "Bearer " + status.jwt
-                },
-                body: JSON.stringify(formData)
-            })
-
-            if(resp.ok) {
-                // Reload all projects
-                setFormData({name: ""})
-                console.log(await resp.json())
-                getProject()
-            } else {
-                alert("Failed to create project!")
-            }
+            await categoriesApi.create(project.id, {name: formData.name})
+            setFormData({name: ""})
+            getProject()
         } catch (e) {
-            console.log(e)
+            console.error(e)
             alert("Failed to create project")
         }
     }
@@ -96,7 +74,7 @@ export function Project() {
             <h1>{project?.name}</h1>
             <p>{project?.description}</p>
             <div className="categories">
-                {project?.categories.map((category) => (
+                {project?.categories?.map((category) => (
                     <CategoryCard key={category.id} category={category} reloadProject={getProject} />
                 ))}
             </div>
