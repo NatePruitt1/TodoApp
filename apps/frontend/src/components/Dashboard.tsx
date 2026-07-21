@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { type Project } from "../types/Project";
 import { useNavigate } from "react-router";
 import { useProjectsApi } from "../api/projects";
+import "./Dashboard.css"
+import { ProjectLink } from "./ProjectLink";
 
 function Dashboard() {
     const [projects, setProjects] = useState<Project[]>([])
@@ -34,41 +36,57 @@ function Dashboard() {
     const addProject = async (event: React.SubmitEvent<HTMLFormElement>) => {
         event.preventDefault();
         try {
-            await projectApi.create({name: newProjectFormData.name, description: newProjectFormData.description})
+            const project = await projectApi.create({name: newProjectFormData.name, description: newProjectFormData.description})
             setNewProjectFormData({name: "", description: ""})
-            loadProjects()
+            navigate("/projects", {state: {project: project}})
         } catch (e) {
             console.error(e)
             alert("Failed to create project")
         }
     }
 
-    return (
-        <>
-            <h1>This is a dashboard!</h1>
-            <form id="create-project" onSubmit={addProject}>
-                <input id="proj-name-input"
-                    value={newProjectFormData.name}
-                    onChange={handleChange}
-                    type="text"
-                    name="name"
-                    placeholder="Enter project name" />
-                <input id="proj-description-input"
-                    value={newProjectFormData.description}
-                    onChange={handleChange}
-                    type="text"
-                    name="description"
-                    placeholder="Enter project description" />
-                <button type="submit">Submit</button>
-            </form>
-            <hr></hr>
-            {projects.map((val) => (
-                <div key={val.id} onClick={() => navigate("/projects", {state: {project: val}})}>
-                    <p >Project name:{val.name} Description:{val.description}</p>
-                    <hr></hr>
+    const toggleCreateDialog = () => {
+        const menu = document.getElementById('dashboard-create-dialog') as HTMLDialogElement
+        menu.showModal()
+    }
+
+    const closeCreateDialog = () => {
+        const menu = document.getElementById('dashboard-create-dialog') as HTMLDialogElement
+        menu.close()
+        setNewProjectFormData({name: "", description: ""})
+    }
+
+    return ( 
+        <div className="dashboard">
+            <header className="dashboard-header-bar">
+                <h3>Projects</h3>
+                <button onClick={toggleCreateDialog}>Create</button>
+            </header>
+            <div className="dashboard-container">
+                <div className="dashboard-list-container">
+                    {projects?.map((project) => (<ProjectLink project={project} reloadProjects={loadProjects} />))}
                 </div>
-            ))}
-        </>
+            </div>
+
+            <dialog id="dashboard-create-dialog">
+                <button onClick={closeCreateDialog}>&times;</button>
+                <form id="dashboard-create-form" onSubmit={addProject}>
+                    <input id="dashboard-name-input"
+                        value={newProjectFormData.name}
+                        onChange={handleChange}
+                        type="text"
+                        name="name" 
+                        placeholder="Enter Your Projects Name."/>
+                    <input id="dashboard-description-input"
+                        value={newProjectFormData.description}
+                        onChange={handleChange}
+                        type="text"
+                        name="description"
+                        placeholder="Describe Your Project." />
+                    <button type="submit">Create</button>
+                </form>
+            </dialog>
+        </div>
     )
 }
 

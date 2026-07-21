@@ -250,12 +250,6 @@ func (ph *ProjectHandlerImpl) FinishCard(c *gin.Context) {
 		return
 	}
 
-	card, err := ph.ProjectService.GetCard(cardUUID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.BadRequestError("failed to get card.", err.Error()))
-		return
-	}
-
 	c.JSON(http.StatusAccepted, gin.H{
 		"status":  "success",
 		"message": "finished status update not yet implemented",

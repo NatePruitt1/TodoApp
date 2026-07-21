@@ -159,7 +159,7 @@ func (ph *ProjectHandlerImpl) DeleteProject(c *gin.Context) {
 		return
 	}
 
-	c.Status(http.StatusAccepted)
+	c.Status(http.StatusNoContent)
 }
 
 func (ph *ProjectHandlerImpl) AddProject(c *gin.Context) {
