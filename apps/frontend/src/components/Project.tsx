@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import { CategoryCard } from "./Category";
 import { useProjectsApi } from "../api/projects";
 import { useCategoriesApi } from "../api/categories";
+import "./Project.css"
 
+import addUrl from "../../public/material-symbols--add.svg"
 
 interface ProjectState {
     project: Project
@@ -60,23 +62,25 @@ export function ProjectScreen() {
     }
 
     return (
-    
+        
         <div className="project">
-            <form id="form-create-category" onSubmit={addCategory}>
-                <input id="cat-name-input"
-                    value={formData.name}
-                    onChange={handleChange}
-                    type="text"
-                    name="name"
-                    placeholder="Enter category name." />
-                <button type="submit">Add category</button>
-            </form>
-            <h1>{project?.name}</h1>
-            <p>{project?.description}</p>
+            <header className="header-bar">
+                <h3>Todo - Project</h3>
+            </header>
+            <div className="project-header">
+                <h1>{project?.name}</h1>
+                <p>- {project?.description}</p>
+            </div>
             <div className="categories">
                 {project?.categories?.map((category) => (
                     <CategoryCard key={category.id} category={category} reloadProject={getProject} />
                 ))}
+                <div className="category">
+                    <div className="create-category-content">
+                        <p className="category-title">Add Category</p>
+                        <img className="small-icon" src={addUrl} />
+                    </div>
+                </div>
             </div>
         </div>
         

@@ -11,9 +11,15 @@
     flex-shrink: 0;
     display: flex;
     padding-left: 20px;
-    border-bottom: 3px solid var(--light-grey);
+    border-bottom: 3px solid gray;
     background-color: white;
     justify-content: space-between;
+}
+
+.dashboard-create-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .dashboard-container {
@@ -37,11 +43,30 @@
     margin: 8px;
     padding-left: 1rem;
     width: 100%;
-    border: 1px solid var(--light-grey);
+    border: 1px solid gray;
     border-radius: 4px;
 }
 
 .project-list-item-inner {
     display: flex;
     justify-content: space-between;
+}
+
+.dashboard-create-input {
+    margin-bottom: 32px;
+    margin-top: 8px;
+}
+
+.dashboard-create-textarea {
+    min-height: 4rem;
+}
+
+#dashboard-create-form {
+    display: flex;
+    flex-direction: column;
+
+}
+
+#project-list-arrow {
+    margin-right: .5rem;
 }

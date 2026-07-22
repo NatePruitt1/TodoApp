@@ -1,9 +1,52 @@
 :root {
-    --light-grey: #d3d3d3;
+    --stormy-teal: #006D77;
+    --pearl-aqua: #83C5BE;
+    --alice-blue: #EDF6F9;
+    --almond-silk: #FFDDD2;
+    --tangerine-dream: #E29578;
     font-family: "Courier New", Courier, monospace;
 }
 
 body {
     margin: 0;
     height: 100vh;
+    background-color: white;
+}
+
+textarea {
+    resize:none;
+}
+
+.header-bar {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    flex-shrink: 0;
+    display: flex;
+    padding-left: 20px;
+    border-bottom: 3px solid gray;
+    background-color: white;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-button-grouping {
+    display: flex;
+    align-items: center;
+    margin-left: 16px;
+}
+
+.small-icon-button {
+    border: none;
+    width: 3rem;
+    background-color: inherit;
+}
+
+.centered-button {
+    display: flex;
+    align-items: center;
+}
+
+.small-icon {
+    width: 1rem;
 }

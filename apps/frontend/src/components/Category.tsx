@@ -62,8 +62,7 @@ export function CategoryCard({category, reloadProject}: {category: Category, rel
 
     return (
         <div key={category.id} className="category">
-            <hr />
-            <h3>{category.name}</h3>
+            <h3 className="category-title">{category.name}</h3>
             <button id="move-forward" onClick={moveCategory}>&gt;</button>
             <button id="move-backward" onClick={moveCategoryBack}>&lt;</button>
             <button id="delete" onClick={deleteCategory}>Delete</button>
@@ -84,7 +83,6 @@ export function CategoryCard({category, reloadProject}: {category: Category, rel
             {category.cards.map((v: Card) => (
                 <CardElement key={v.id} card={v} reloadProject={reloadProject} />
             ))}
-            <hr />
         </div>
     )
 }

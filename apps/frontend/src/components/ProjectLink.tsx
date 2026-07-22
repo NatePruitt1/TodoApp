@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router";
 import type { Project } from "../types/Project";
 import { useProjectsApi } from "../api/projects";
+import trashUrl from "../../public/material-symbols--delete-outline.svg"
+import arrowUrl from "../../public/material-symbols--arrow-menu-open.svg"
 
 export function ProjectLink({project, reloadProjects}: {project: Project, reloadProjects: {(): void}}) {
     const navigate = useNavigate();
@@ -22,12 +24,12 @@ export function ProjectLink({project, reloadProjects}: {project: Project, reload
     
     return (
         <div className="project-list-item" >
-            <p>{project.name}</p>
+            <h3>{project.name}</h3>
             <div className="project-list-item-inner">
                 <p>{project.description}</p>
                 <div className="project-list-item-inner">
-                    <button onClick={handleClick}>Go</button>
-                    <button onClick={handleDelete}>Delete</button>
+                    <button className="small-icon-button" onClick={handleDelete}><img src={trashUrl} /></button>
+                    <button id="project-list-arrow" className="small-icon-button" onClick={handleClick}><img src={arrowUrl} /></button>
                 </div>
             </div>
         </div>
