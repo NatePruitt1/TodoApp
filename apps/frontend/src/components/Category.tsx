@@ -61,7 +61,7 @@ export function CategoryCard({category, reloadProject}: {category: Category, rel
     }
 
     return (
-        <div key={category.id} className="category">
+        <div key={category.id} className="category" draggable={true}>
             <h3 className="category-title">{category.name}</h3>
             <button id="move-forward" onClick={moveCategory}>&gt;</button>
             <button id="move-backward" onClick={moveCategoryBack}>&lt;</button>

@@ -9,8 +9,9 @@
     align-items: center;
 }
 
-.project-header h1 {
-    margin-right: 1rem
+.project-header h4 {
+    margin-left: 1rem;
+    margin-right: 1rem;
 }
 
 .categories {
@@ -43,4 +44,15 @@
 
 .category-title {
     padding-left: 1rem;
+}
+
+#create-category-form {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+#create-category-form input {
+    margin-left: 1rem;
 }

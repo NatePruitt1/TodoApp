@@ -7,6 +7,8 @@ import { useCategoriesApi } from "../api/categories";
 import "./Project.css"
 
 import addUrl from "../../public/material-symbols--add.svg"
+import homeUrl from "../../public/material-symbols--home-outline.svg"
+import { Header } from "./Header";
 
 interface ProjectState {
     project: Project
@@ -64,11 +66,9 @@ export function ProjectScreen() {
     return (
         
         <div className="project">
-            <header className="header-bar">
-                <h3>Todo - Project</h3>
-            </header>
+            <Header title="Todo - Project" />
             <div className="project-header">
-                <h1>{project?.name}</h1>
+                <h4>{project?.name}</h4>
                 <p>- {project?.description}</p>
             </div>
             <div className="categories">
@@ -78,8 +78,17 @@ export function ProjectScreen() {
                 <div className="category">
                     <div className="create-category-content">
                         <p className="category-title">Add Category</p>
-                        <img className="small-icon" src={addUrl} />
                     </div>
+                    <form id="create-category-form" onSubmit={addCategory}>
+                        <input id="dashboard-name-input"
+                            value={formData.name}
+                            onChange={handleChange}
+                            type="text"
+                            name="name" 
+                            placeholder="Enter Your Category's Name." 
+                            autoComplete="off" />
+                        <button type="submit" className="tiny-icon-button"><img src={addUrl} /></button>
+                    </form>
                 </div>
             </div>
         </div>

@@ -17,6 +17,13 @@ textarea {
     resize:none;
 }
 
+input:focus,
+select:focus,
+textarea:focus,
+button:focus {
+    outline: none;
+}
+
 .header-bar {
     position: sticky;
     top: 0;
@@ -36,9 +43,25 @@ textarea {
     margin-left: 16px;
 }
 
+.header-home-button-grouping {
+    display: flex;
+    align-items: center;
+    margin-left: 1rem;
+}
+
+.header-home-button-grouping button {
+    margin-right: 1rem;
+}
+
 .small-icon-button {
     border: none;
     width: 3rem;
+    background-color: inherit;
+}
+
+.tiny-icon-button {
+    border: none;
+    width: 2rem;
     background-color: inherit;
 }
 
