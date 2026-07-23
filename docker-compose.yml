@@ -1,0 +1,74 @@
+services:
+  cloudflared-tunnel:
+    profiles: ["prod"]
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    volumes:
+      - /etc/cloudflared:/etc/cloudflared:ro
+    command: tunnel --config /etc/cloudflared/config.yml run
+    networks:
+      - app-network
+    depends_on:
+      - frontend-nginx
+  
+  frontend-nginx:
+    build:
+      context: .
+      dockerfile: apps/frontend/dockerfile
+    depends_on:
+      - go-backend
+    networks:
+      - app-network
+    
+  go-backend:
+    build:
+      context: ./apps/backend
+    env_file:
+      - ./apps/backend/.env
+      - ./apps/backend/internal/db/.env.db
+    environment:
+      - POSTGRES_HOST=postgres-db
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - app-network
+  
+  postgres-db:
+    image: postgres:16-alpine
+    env_file:
+      - ./apps/backend/internal/db/.env.db
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  
+  migrate:
+    image: migrate/migrate:latest
+    environment:
+      - POSTGRES_HOST=postgres-db
+    env_file:
+      - ./apps/backend/internal/db/.env.db
+    volumes:
+      - ./apps/backend/internal/db/migrations:/migrations:ro
+    networks:
+      - app-network
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    entrypoint: ["sh", "-c"]
+    command:
+      - "migrate -path=/migrations -database=postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@$$POSTGRES_HOST:5432/$$POSTGRES_DB?sslmode=disable up"
+    restart: "no"
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  db_data:

@@ -1,0 +1,40 @@
+services:
+  postgres-db:
+    env_file:
+      - ./apps/backend/internal/db/.env.db.development
+    volumes:
+      - db_test_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  go-backend:
+    build:
+      context: ./apps/backend
+      dockerfile: dockerfile.dev
+    env_file:
+      - ./apps/backend/.env.development
+      - ./apps/backend/internal/db/.env.db.development
+    volumes:
+      - ./apps/backend:/app
+    ports:
+      - "8080:8080"
+
+  frontend-nginx:
+    build:
+      context: .
+      dockerfile: apps/frontend/dockerfile.dev
+    volumes:
+      - ./apps/frontend:/app/apps/frontend
+      - /app/apps/frontend/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - BACKEND_PROXY_TARGET=http://go-backend:8080
+    ports:
+      - "5173:5173"
+
+  migrate:
+    env_file:
+      - ./apps/backend/internal/db/.env.db.development
+
+volumes:
+  db_test_data:
