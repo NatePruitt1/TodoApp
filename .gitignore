@@ -27,5 +27,7 @@ go.work
 
 # --- Environment & OS ---
 .env
+.env.*
+!.env.example
 .DS_Store
 Thumbs.db

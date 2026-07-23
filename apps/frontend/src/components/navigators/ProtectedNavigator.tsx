@@ -2,8 +2,6 @@ import { Outlet, Navigate } from "react-router";
 import { useAuth } from "../AuthContext";
 import { requireAuth } from "../../utils/Auth";
 
-const BASE_URL = import.meta.env.VITE_API_URL;
-
 export function ProtectedNavigator() {
     const userContext = useAuth();
 

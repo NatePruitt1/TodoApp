@@ -17,7 +17,7 @@ import (
 )
 
 func main() {
-	if err := godotenv.Load(); err != nil {
+	if err := godotenv.Load(".env", "internal/db/.env.db"); err != nil {
 		fmt.Println("No .env file found, using system vars only.")
 	}
 
@@ -26,7 +26,7 @@ func main() {
 	router := gin.Default()
 
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "http://127.0.0.1:5173"},
+		AllowOrigins:     []string{"https://nathanielpruitt.com", "http://localhost:5173", "http://127.0.0.1:5173"},
 		AllowMethods:     []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length", "Authorization"},
@@ -39,8 +39,6 @@ func main() {
 		fmt.Println(err.Error())
 		panic(-1)
 	}
-
-	fmt.Println(cfg.DatabaseURL)
 
 	pool, err := pgxpool.New(context.Background(), cfg.DatabaseURL)
 	if err != nil {

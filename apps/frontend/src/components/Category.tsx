@@ -1,7 +1,5 @@
-import React, { useState } from "react";
 import type { Card, Category } from "../types/Project";
 import { useCategoriesApi } from "../api/categories";
-import { useCardsApi } from "../api/cards";
 import { CardElement } from "./Card";
 import "./Category.css"
 
@@ -10,49 +8,6 @@ import trashUrl from "../../public/material-symbols--delete-outline.svg"
 
 export function CategoryCard({category, reloadProject}: {category: Category, reloadProject: {(): void}}) {
     const categoriesApi = useCategoriesApi();
-    const cardsApi = useCardsApi();
-
-    const [formData, setFormData] = useState({title: "", content: ""})
-    
-    const addCard = async (event: React.SubmitEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        try {
-            await cardsApi.create(category.id, {title: formData.title, content: formData.content})
-            setFormData({title: "", content: ""})
-            reloadProject()
-        } catch(e) {
-            alert("Could not create card.")
-            console.error(e)
-        }
-    }
-    
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({
-            ...prev,
-            [name]: value,
-        }));
-    };
-
-    const moveCategory = async () => {
-        try {
-            await categoriesApi.reposition(category.id, category.index + 1)
-            reloadProject();
-        } catch(error) {
-            console.error(error)
-            alert("Could not move category.")
-        }
-    }
-
-    const moveCategoryBack = async () => {
-        try {
-            await categoriesApi.reposition(category.id, category.index - 1)
-            reloadProject();
-        } catch(error) {
-            console.error(error)
-            alert("Could not move category.")
-        }
-    }
 
     const deleteCategory = async () => {
         try{

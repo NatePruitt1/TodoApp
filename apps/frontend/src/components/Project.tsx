@@ -7,7 +7,6 @@ import { useCategoriesApi } from "../api/categories";
 import "./Project.css"
 
 import addUrl from "../../public/material-symbols--add.svg"
-import homeUrl from "../../public/material-symbols--home-outline.svg"
 import { Header } from "./Header";
 
 interface ProjectState {
