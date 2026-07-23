@@ -51,7 +51,7 @@ export function Header({title}: {title: string}) {
             </div>
             <div className="header-button-grouping">
                 <button onClick={toggleCreateDialog} id="create-button" className="small-icon-button"><img src={addUrl} /></button>
-                <button className="small-icon-button"><img src={personUrl} /></button>
+                <button onClick={()=>navigate("/Profile")} className="small-icon-button"><img src={personUrl} /></button>
             </div>
         </header>
 

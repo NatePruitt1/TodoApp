@@ -1,8 +1,12 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import type { Card, Category } from "../types/Project";
 import { useCategoriesApi } from "../api/categories";
 import { useCardsApi } from "../api/cards";
 import { CardElement } from "./Card";
+import "./Category.css"
+
+import addUrl from "../../public/material-symbols--add.svg"
+import trashUrl from "../../public/material-symbols--delete-outline.svg"
 
 export function CategoryCard({category, reloadProject}: {category: Category, reloadProject: {(): void}}) {
     const categoriesApi = useCategoriesApi();
@@ -60,29 +64,44 @@ export function CategoryCard({category, reloadProject}: {category: Category, rel
         }
     }
 
+    const startDrag = (e: React.DragEvent<HTMLDivElement>) => {
+        e.dataTransfer.setData("application/json", JSON.stringify(category))
+    }
+
+    const dragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault()
+    }
+
+    const dropOver = (e: React.DragEvent<HTMLDivElement>) => {
+        const data = JSON.parse(e.dataTransfer.getData('application/json')) as Category;
+        console.log(`Move category index: ${data.index} to ${category.index}`);
+        (async () => {
+            try {
+                await categoriesApi.reposition(data.id, category.index)
+                reloadProject()
+            } catch(error) {
+                console.error(error)
+            }
+        })();
+    }
+
     return (
-        <div key={category.id} className="category" draggable={true}>
-            <h3 className="category-title">{category.name}</h3>
-            <button id="move-forward" onClick={moveCategory}>&gt;</button>
-            <button id="move-backward" onClick={moveCategoryBack}>&lt;</button>
-            <button id="delete" onClick={deleteCategory}>Delete</button>
-            <form id="form-create-card" onSubmit={addCard}>
-                <input id="card-name-input"
-                    value={formData.title}
-                    onChange={handleChange}
-                    type="text"
-                    name="title"
-                    placeholder="Enter card title." />
-                <textarea id="card-content-input"
-                    value={formData.content}
-                    onChange={handleChange}
-                    name="content"
-                    placeholder="Enter card content." />
-                <button type="submit">Add card</button>
-            </form>
+        <div key={category.id} className="category" draggable={true} onDragStart={startDrag} onDragOver={dragOver} onDrop={dropOver} >
+            <div className="category-header">
+                <h3 className="category-title">{category.name}</h3>
+                <button id="delete" className="small-icon-button" onClick={deleteCategory}><img src={trashUrl} /></button>
+            </div>
+
             {category.cards.map((v: Card) => (
                 <CardElement key={v.id} card={v} reloadProject={reloadProject} />
             ))}
+
+            <div className="card">
+                <div className="create-card-content">
+                    <p>Add a card </p>
+                    <img src={addUrl} className="medium-icon" />
+                </div>
+            </div>
         </div>
     )
 }

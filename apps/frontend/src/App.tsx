@@ -7,6 +7,7 @@ import { AuthProvider } from './components/AuthContext'
 import Dashboard from './components/Dashboard'
 import { ProtectedNavigator } from './components/navigators/ProtectedNavigator'
 import { ProjectScreen } from './components/Project'
+import { ProfileScreen } from './components/Profile'
 
 function App() {
   console.log("Hello!")
@@ -22,6 +23,7 @@ function App() {
           <Route element={<ProtectedNavigator />}>
             <Route path='/' element={<Dashboard />} />
             <Route path='/projects' element={<ProjectScreen />} />
+            <Route path="/profile" element={<ProfileScreen />} />
           </Route>
         </Routes>
       </AuthProvider>

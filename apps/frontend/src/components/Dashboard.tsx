@@ -16,8 +16,6 @@ function Dashboard() {
     const navigate = useNavigate();
     const projectApi = useProjectsApi();
 
-    
-
     const loadProjects = async () => {
         try {
             const projects = await projectApi.list()

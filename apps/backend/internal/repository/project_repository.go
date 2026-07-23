@@ -84,6 +84,7 @@ func (ur *ProjectRepositoryImpl) Delete(id uuid.UUID) error {
 	const q = `
 		DELETE FROM projects
 		WHERE id = $1
+		
 	`
 
 	_, err := ur.db.Exec(context.Background(), q, id)

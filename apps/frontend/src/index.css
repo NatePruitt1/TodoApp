@@ -73,3 +73,7 @@ button:focus {
 .small-icon {
     width: 1rem;
 }
+
+.medium-icon {
+    width: 2rem;
+}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import './Login.css'
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { useAuth } from '../AuthContext';
 import { jwtDecode } from 'jwt-decode';
 import { type JwtData } from '../../types/Jwt';
@@ -81,6 +81,7 @@ function Login() {
                     placeholder="Enter password"></input>
                 <button type='submit'>Login</button>
             </form>
+            <Link to={{pathname: "/create"}}>Create an account.</Link>
         </>
     )
 }
