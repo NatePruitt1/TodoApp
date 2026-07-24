@@ -26,9 +26,9 @@ This project will continue to be updated and will eventually be fully featured.
     - Currenlty only basic styles and functionalities, major focus of future updates.
 
 ## Tech Stack
-**Frontend:** Typescript, React, Vite
-**Backend:** Go, Gin, Postgres
-**Infra:** Docker Compose, Cloudflare Tunnels, Nginx.
+**Frontend:** Typescript, React, Vite \
+**Backend:** Go, Gin, Postgres \
+**Infra:** Docker Compose, Cloudflare Tunnels, Nginx. \
 
 ## Architecture
  - Frontend: Accessed through a cloudflare tunnel container.
@@ -50,10 +50,11 @@ If you would like to run the code without containers, you will need
  - Go migrate
 
 ### Setup (Dev)
-\'\'\'bash
+
+```bash
 git clone ...
 cp apps/backend/.env.example apps/backend/.env.development
 cp apps/backend/internal/db/.env.db.development.example apps/backend/internal/db/.env.db.development
 cp apps/frontend/.env.example apps/frontend/.env # We don't use a dev env here becuase this is configuration, not secrets.
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
-\'\'\'
+```
