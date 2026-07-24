@@ -2,8 +2,8 @@
 
 A full-stack Kanban board application built with Go-Gin, Typescript-React, and PostgreSQL.
 
-[https://nathanielpruitt.com]
-Note: If there are issues with access, please contact me at [nathaniel.n.pruitt@gmail.com]
+https://nathanielpruitt.com \
+Note: If there are issues with access, please contact me at nathaniel.n.pruitt@gmail.com
 
 ## About
 
@@ -28,7 +28,7 @@ This project will continue to be updated and will eventually be fully featured.
 ## Tech Stack
 **Frontend:** Typescript, React, Vite \
 **Backend:** Go, Gin, Postgres \
-**Infra:** Docker Compose, Cloudflare Tunnels, Nginx. \
+**Infra:** Docker Compose, Cloudflare Tunnels, Nginx.
 
 ## Architecture
  - Frontend: Accessed through a cloudflare tunnel container.
