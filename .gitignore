@@ -29,5 +29,6 @@ go.work
 .env
 .env.*
 !.env.example
+!.env.db.development.example
 .DS_Store
 Thumbs.db
