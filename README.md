@@ -50,10 +50,10 @@ If you would like to run the code without containers, you will need
  - Go migrate
 
 ### Setup (Dev)
-\`\`\`bash
+\'\'\'bash
 git clone ...
 cp apps/backend/.env.example apps/backend/.env.development
 cp apps/backend/internal/db/.env.db.development.example apps/backend/internal/db/.env.db.development
 cp apps/frontend/.env.example apps/frontend/.env # We don't use a dev env here becuase this is configuration, not secrets.
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
-\`\`\`
+\'\'\'
