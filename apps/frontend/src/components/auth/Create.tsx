@@ -23,7 +23,17 @@ function Create() {
     
         const handleSubmit = async (event: React.SubmitEvent<HTMLFormElement>) => {
             event.preventDefault();
-    
+
+            if(formData.password.trim().length < 6) {
+                alert("Password too short.")
+                return
+            }
+
+            if(formData.username.trim().length < 3) {
+                alert("Username too short.")
+                return
+            }
+        
             try {
                 console.log(BASE_URL)
                 let resp = await fetch(BASE_URL + "/auth/register",

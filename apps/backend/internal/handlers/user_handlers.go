@@ -6,11 +6,14 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
+	"unicode"
 
 	"github.com/gin-gonic/gin"
 )
 
 const RTOKEN_PATH = "/api/v0/auth/refresh"
+const BLOCKED_CREDENTIAL_CHARS = "<>{}[]()\"'`\\|;:,&/"
 
 // UserHandler interface allows DI for the user handler functionality.
 type UserHandler interface {
@@ -49,6 +52,38 @@ func (uh *UserHandlerImpl) createRefreshToken(c *gin.Context, token string) {
 	)
 }
 
+func strippedLen(value string) int {
+	return len(strings.TrimSpace(value))
+}
+
+func validateCredentialField(fieldName, value string, minLength int) (string, string) {
+	if strippedLen(value) < minLength {
+		return fmt.Sprintf("%s too short", fieldName), ""
+	}
+
+	if strings.IndexFunc(value, unicode.IsSpace) >= 0 {
+		return fmt.Sprintf("%s cannot contain spaces", fieldName), ""
+	}
+
+	if strings.ContainsAny(value, BLOCKED_CREDENTIAL_CHARS) {
+		return fmt.Sprintf("%s contains blocked special characters", fieldName), fmt.Sprintf("Blocked characters: %s", BLOCKED_CREDENTIAL_CHARS)
+	}
+
+	return "", ""
+}
+
+func validateUsernameAndPassword(username, password string) (string, string) {
+	if message, details := validateCredentialField("Username", username, 3); message != "" {
+		return message, details
+	}
+
+	if message, details := validateCredentialField("Password", password, 6); message != "" {
+		return message, details
+	}
+
+	return "", ""
+}
+
 // Handles the creation or rejection of a new account on the create endpoint.
 func (uh *UserHandlerImpl) CreateAccountHandler(c *gin.Context) {
 	var req dto.LoginRequestDTO
@@ -56,6 +91,12 @@ func (uh *UserHandlerImpl) CreateAccountHandler(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, dto.BadRequestError("Failed to create account, bad body data.", err.Error()))
+		uh.deleteRefreshToken(c)
+		return
+	}
+
+	if message, details := validateUsernameAndPassword(req.Username, req.Password); message != "" {
+		c.JSON(http.StatusBadRequest, dto.BadRequestError(message, details))
 		uh.deleteRefreshToken(c)
 		return
 	}
@@ -92,6 +133,12 @@ func (uh *UserHandlerImpl) LoginHandler(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, dto.BadRequestError("Failed to login, bad body data.", err.Error()))
+		uh.deleteRefreshToken(c)
+		return
+	}
+
+	if message, details := validateUsernameAndPassword(req.Username, req.Password); message != "" {
+		c.JSON(http.StatusBadRequest, dto.BadRequestError(message, details))
 		uh.deleteRefreshToken(c)
 		return
 	}
