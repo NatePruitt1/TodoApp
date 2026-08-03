@@ -81,7 +81,7 @@ function Create() {
                         placeholder="Enter password"></input>
                     <button type='submit'>Login</button>
                 </form>
-                <Link to={{pathname: "/login"}}>Log in to your account.</Link>
+                <Link to={{pathname: "/login"}}>Create your account.</Link>
             </>
         )
 }

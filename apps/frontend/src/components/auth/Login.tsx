@@ -1,15 +1,17 @@
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import './Login.css'
 import { Link, useNavigate } from 'react-router';
 import { useAuth } from '../AuthContext';
 import { jwtDecode } from 'jwt-decode';
 import { type JwtData } from '../../types/Jwt';
+import { type InputHandle, Input } from '../Input';
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 
 function Login() {
     const [formData, setFormData] = useState({username: "", password: ""});
     const userContext = useAuth();
+    const usernameInputRef = useRef<InputHandle>(null);
 
     const navigate = useNavigate();
 
@@ -20,6 +22,13 @@ function Login() {
             [name]: value,
         }));
     };
+
+    const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        handleChange(e)
+        if(e.target.value.length < 3) {
+            usernameInputRef.current?.setError("Username too short.")
+        }
+    }
 
     const handleSubmit = async (event: React.SubmitEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -66,12 +75,14 @@ function Login() {
         <>
             <form id="login-form" className="auth-form" onSubmit={handleSubmit}>
                 <h1>Log in to Todo-App</h1>
-                <input id="username-input" 
-                    value={formData.username} 
-                    onChange={handleChange} 
+                <Input 
+                    ref={usernameInputRef}
+                    id="username-input" 
+                    value={formData.username}
+                    onChange={handleUsernameChange} 
                     type='text'
                     name='username'
-                    placeholder="Enter username"></input>
+                    placeholder="Enter username" />
                 <input 
                     id="password-input" 
                     value={formData.password} 
