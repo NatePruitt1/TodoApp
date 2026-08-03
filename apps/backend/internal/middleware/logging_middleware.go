@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"backend/internal/dto"
 	"log/slog"
 	"os"
 	"time"
@@ -8,15 +9,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-const LoggerKey = "logger"
-
 func LoggingMiddleware() gin.HandlerFunc {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 	return func(ctx *gin.Context) {
 		start := time.Now()
 
-		ctx.Set(LoggerKey, logger)
+		ctx.Set(dto.LoggerKey, logger)
 		ctx.Next()
 
 		logger.Info("request",

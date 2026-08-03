@@ -29,30 +29,30 @@ func (ph *ProjectHandlerImpl) AddCard(c *gin.Context) {
 
 	userUUID, err := getUserId(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, dto.BadRequestError("failed to retrieve user id.", err.Error()))
+		c.JSON(http.StatusUnauthorized, dto.BadRequestError(c, "failed to retrieve user id.", err.Error()))
 		return
 	}
 
 	categoryUUID, err := getCategoryId(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError("failed to retrieve category id", err.Error()))
+		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, "failed to retrieve category id", err.Error()))
 		return
 	}
 
 	err = ph.ProjectService.CheckCategoryOwner(categoryUUID, userUUID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError("user does not own category", err.Error()))
+		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, "user does not own category", err.Error()))
 		return
 	}
 
 	if err = c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError("failed to parse request body.", err.Error()))
+		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, "failed to parse request body.", err.Error()))
 		return
 	}
 
 	card, err := ph.ProjectService.AddCard(categoryUUID, req.Title, req.Content)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.BadRequestError("failed to create card.", err.Error()))
+		c.JSON(http.StatusInternalServerError, dto.BadRequestError(c, "failed to create card.", err.Error()))
 		return
 	}
 
@@ -69,24 +69,24 @@ func (ph *ProjectHandlerImpl) RenameCard(c *gin.Context) {
 
 	userUUID, err := getUserId(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, dto.BadRequestError("failed to retrieve user id.", err.Error()))
+		c.JSON(http.StatusUnauthorized, dto.BadRequestError(c, "failed to retrieve user id.", err.Error()))
 		return
 	}
 
 	cardUUID, err := getCardId(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError("failed to retrieve card id", err.Error()))
+		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, "failed to retrieve card id", err.Error()))
 		return
 	}
 
 	err = ph.ProjectService.CheckCardOwner(cardUUID, userUUID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError("user does not own card", err.Error()))
+		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, "user does not own card", err.Error()))
 		return
 	}
 
 	if err = c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError("failed to parse request body.", err.Error()))
+		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, "failed to parse request body.", err.Error()))
 		return
 	}
 
@@ -95,7 +95,7 @@ func (ph *ProjectHandlerImpl) RenameCard(c *gin.Context) {
 	if req.Title != "" {
 		card, err = ph.ProjectService.RenameCard(cardUUID, req.Title)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, dto.BadRequestError("failed to rename card.", err.Error()))
+			c.JSON(http.StatusInternalServerError, dto.BadRequestError(c, "failed to rename card.", err.Error()))
 			return
 		}
 	}
@@ -103,7 +103,7 @@ func (ph *ProjectHandlerImpl) RenameCard(c *gin.Context) {
 	if req.Content != "" {
 		card, err = ph.ProjectService.EditCard(cardUUID, req.Content)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, dto.BadRequestError("failed to edit card content.", err.Error()))
+			c.JSON(http.StatusInternalServerError, dto.BadRequestError(c, "failed to edit card content.", err.Error()))
 			return
 		}
 	}
@@ -121,30 +121,30 @@ func (ph *ProjectHandlerImpl) EditCard(c *gin.Context) {
 
 	userUUID, err := getUserId(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, dto.BadRequestError("failed to retrieve user id.", err.Error()))
+		c.JSON(http.StatusUnauthorized, dto.BadRequestError(c, "failed to retrieve user id.", err.Error()))
 		return
 	}
 
 	cardUUID, err := getCardId(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError("failed to retrieve card id", err.Error()))
+		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, "failed to retrieve card id", err.Error()))
 		return
 	}
 
 	err = ph.ProjectService.CheckCardOwner(cardUUID, userUUID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError("user does not own card", err.Error()))
+		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, "user does not own card", err.Error()))
 		return
 	}
 
 	if err = c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError("failed to parse request body.", err.Error()))
+		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, "failed to parse request body.", err.Error()))
 		return
 	}
 
 	card, err := ph.ProjectService.EditCard(cardUUID, req.Content)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.BadRequestError("failed to edit card.", err.Error()))
+		c.JSON(http.StatusInternalServerError, dto.BadRequestError(c, "failed to edit card.", err.Error()))
 		return
 	}
 
@@ -159,25 +159,25 @@ func (ph *ProjectHandlerImpl) EditCard(c *gin.Context) {
 func (ph *ProjectHandlerImpl) DeleteCard(c *gin.Context) {
 	userUUID, err := getUserId(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, dto.BadRequestError("failed to retrieve user id.", err.Error()))
+		c.JSON(http.StatusUnauthorized, dto.BadRequestError(c, "failed to retrieve user id.", err.Error()))
 		return
 	}
 
 	cardUUID, err := getCardId(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError("failed to retrieve card id", err.Error()))
+		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, "failed to retrieve card id", err.Error()))
 		return
 	}
 
 	err = ph.ProjectService.CheckCardOwner(cardUUID, userUUID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError("user does not own card", err.Error()))
+		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, "user does not own card", err.Error()))
 		return
 	}
 
 	err = ph.ProjectService.DeleteCard(cardUUID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.BadRequestError("failed to delete card.", err.Error()))
+		c.JSON(http.StatusInternalServerError, dto.BadRequestError(c, "failed to delete card.", err.Error()))
 		return
 	}
 
@@ -189,30 +189,30 @@ func (ph *ProjectHandlerImpl) MoveCard(c *gin.Context) {
 
 	userUUID, err := getUserId(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, dto.BadRequestError("failed to retrieve user id.", err.Error()))
+		c.JSON(http.StatusUnauthorized, dto.BadRequestError(c, "failed to retrieve user id.", err.Error()))
 		return
 	}
 
 	cardUUID, err := getCardId(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError("failed to retrieve card id", err.Error()))
+		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, "failed to retrieve card id", err.Error()))
 		return
 	}
 
 	err = ph.ProjectService.CheckCardOwner(cardUUID, userUUID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError("user does not own card", err.Error()))
+		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, "user does not own card", err.Error()))
 		return
 	}
 
 	if err = c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError("failed to parse request body.", err.Error()))
+		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, "failed to parse request body.", err.Error()))
 		return
 	}
 
 	card, err := ph.ProjectService.MoveCard(cardUUID, req.CategoryID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.BadRequestError("failed to move card.", err.Error()))
+		c.JSON(http.StatusInternalServerError, dto.BadRequestError(c, "failed to move card.", err.Error()))
 		return
 	}
 
@@ -229,24 +229,24 @@ func (ph *ProjectHandlerImpl) FinishCard(c *gin.Context) {
 
 	userUUID, err := getUserId(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, dto.BadRequestError("failed to retrieve user id.", err.Error()))
+		c.JSON(http.StatusUnauthorized, dto.BadRequestError(c, "failed to retrieve user id.", err.Error()))
 		return
 	}
 
 	cardUUID, err := getCardId(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError("failed to retrieve card id", err.Error()))
+		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, "failed to retrieve card id", err.Error()))
 		return
 	}
 
 	err = ph.ProjectService.CheckCardOwner(cardUUID, userUUID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError("user does not own card", err.Error()))
+		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, "user does not own card", err.Error()))
 		return
 	}
 
 	if err = c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError("failed to parse request body.", err.Error()))
+		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, "failed to parse request body.", err.Error()))
 		return
 	}
 

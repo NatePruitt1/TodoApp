@@ -14,21 +14,21 @@ func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		authHeader := ctx.GetHeader("Authorization")
 		if authHeader == "" {
-			ctx.JSON(http.StatusUnauthorized, dto.BadRequestError("Empty Auth header", ""))
+			ctx.JSON(http.StatusUnauthorized, dto.BadRequestError(ctx, "Empty Auth header", ""))
 			ctx.Abort()
 			return
 		}
 
 		authHeaderParts := strings.SplitN(authHeader, " ", 2)
 		if len(authHeaderParts) != 2 || authHeaderParts[0] != "Bearer" {
-			ctx.JSON(http.StatusUnauthorized, dto.BadRequestError("Auth header must be of the form \"Bearer {token}\"", ""))
+			ctx.JSON(http.StatusUnauthorized, dto.BadRequestError(ctx, "Auth header must be of the form \"Bearer {token}\"", ""))
 			ctx.Abort()
 			return
 		}
 
 		token, err := services.ParseToken(authHeaderParts[1], cfg.JwtSecret)
 		if err != nil {
-			ctx.JSON(http.StatusUnauthorized, dto.BadRequestError("Invalid token.", err.Error()))
+			ctx.JSON(http.StatusUnauthorized, dto.BadRequestError(ctx, "Invalid token.", err.Error()))
 			ctx.Abort()
 			return
 		}

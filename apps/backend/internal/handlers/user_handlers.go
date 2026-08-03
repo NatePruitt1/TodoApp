@@ -55,14 +55,14 @@ func (uh *UserHandlerImpl) CreateAccountHandler(c *gin.Context) {
 	var resp dto.LoginResponseDTO
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError("Failed to create account, bad body data.", err.Error()))
+		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, "Failed to create account, bad body data.", err.Error()))
 		uh.deleteRefreshToken(c)
 		return
 	}
 
 	resp, token, err := uh.UserService.CreateAccount(context.Background(), req.Username, req.Password)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError("Failed to create account.", err.Error()))
+		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, "Failed to create account.", err.Error()))
 		uh.deleteRefreshToken(c)
 		return
 	}
@@ -71,7 +71,7 @@ func (uh *UserHandlerImpl) CreateAccountHandler(c *gin.Context) {
 	if err != nil {
 		refreshToken, err = uh.RefreshTokenService.CreateToken(resp.ID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, dto.BadRequestError("Failed to create refresh token.", err.Error()))
+			c.JSON(http.StatusInternalServerError, dto.BadRequestError(c, "Failed to create refresh token.", err.Error()))
 			uh.deleteRefreshToken(c)
 			return
 		}
@@ -91,14 +91,14 @@ func (uh *UserHandlerImpl) LoginHandler(c *gin.Context) {
 	var req dto.LoginRequestDTO
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError("Failed to login, bad body data.", err.Error()))
+		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, "Failed to login, bad body data.", err.Error()))
 		uh.deleteRefreshToken(c)
 		return
 	}
 
 	resp, token, err := uh.UserService.AuthenticateAccount(context.Background(), req.Username, req.Password)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError("Failed to create account.", err.Error()))
+		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, "Failed to create account.", err.Error()))
 		uh.deleteRefreshToken(c)
 		return
 	}
@@ -107,14 +107,14 @@ func (uh *UserHandlerImpl) LoginHandler(c *gin.Context) {
 	if err != nil {
 		refreshToken, err = uh.RefreshTokenService.CreateToken(resp.ID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, dto.BadRequestError("Failed to create refresh token.", err.Error()))
+			c.JSON(http.StatusInternalServerError, dto.BadRequestError(c, "Failed to create refresh token.", err.Error()))
 			uh.deleteRefreshToken(c)
 			return
 		}
 	} else {
 		refreshToken, err = uh.RefreshTokenService.UpdateTokenByHash(refreshToken.Hash)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, dto.BadRequestError("Failed to create refresh token.", err.Error()))
+			c.JSON(http.StatusInternalServerError, dto.BadRequestError(c, "Failed to create refresh token.", err.Error()))
 			uh.deleteRefreshToken(c)
 			return
 		}
@@ -132,7 +132,7 @@ func (uh *UserHandlerImpl) LoginHandler(c *gin.Context) {
 func (uh *UserHandlerImpl) RefreshHandler(c *gin.Context) {
 	raw, err := c.Cookie("refresh_token")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError("No refresh token provided.", ""))
+		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, "No refresh token provided.", ""))
 		return
 	}
 
@@ -140,20 +140,20 @@ func (uh *UserHandlerImpl) RefreshHandler(c *gin.Context) {
 
 	_, err = uh.RefreshTokenService.CheckToken(raw)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, dto.BadRequestError("Refresh token not accepted.", err.Error()))
+		c.JSON(http.StatusUnauthorized, dto.BadRequestError(c, "Refresh token not accepted.", err.Error()))
 		uh.deleteRefreshToken(c)
 		return
 	}
 
 	token, err := uh.RefreshTokenService.UpdateToken(raw)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.BadRequestError("Failed to update refresh token.", err.Error()))
+		c.JSON(http.StatusInternalServerError, dto.BadRequestError(c, "Failed to update refresh token.", err.Error()))
 		return
 	}
 
 	resp, authToken, err := uh.UserService.RefreshAccount(context.Background(), token.UserId)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError("Failed to log into account using refresh.", err.Error()))
+		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, "Failed to log into account using refresh.", err.Error()))
 		uh.deleteRefreshToken(c)
 		return
 	}

@@ -88,19 +88,19 @@ func getUserId(c *gin.Context) (uuid.UUID, error) {
 func (ph *ProjectHandlerImpl) GetProject(c *gin.Context) {
 	userUUID, err := getUserId(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, dto.BadRequestError("failed to retrieve user id.", err.Error()))
+		c.JSON(http.StatusUnauthorized, dto.BadRequestError(c, "failed to retrieve user id.", err.Error()))
 		return
 	}
 
 	projectUUID, err := getProjectId(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError("failed to retrieve project id", err.Error()))
+		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, "failed to retrieve project id", err.Error()))
 		return
 	}
 
 	project, err := ph.ProjectService.GetProject(userUUID, projectUUID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError("Failed to get project.", err.Error()))
+		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, "Failed to get project.", err.Error()))
 		return
 	}
 
@@ -115,13 +115,13 @@ func (ph *ProjectHandlerImpl) GetProject(c *gin.Context) {
 func (ph *ProjectHandlerImpl) GetProjects(c *gin.Context) {
 	userUUID, err := getUserId(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, dto.BadRequestError("failed to retrieve user id.", err.Error()))
+		c.JSON(http.StatusUnauthorized, dto.BadRequestError(c, "failed to retrieve user id.", err.Error()))
 		return
 	}
 
 	projects, err := ph.ProjectService.GetProjects(userUUID)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, dto.BadRequestError("Error getting projects.", err.Error()))
+		c.JSON(http.StatusUnauthorized, dto.BadRequestError(c, "Error getting projects.", err.Error()))
 		return
 	}
 
@@ -144,18 +144,18 @@ func (ph *ProjectHandlerImpl) GetProjects(c *gin.Context) {
 func (ph *ProjectHandlerImpl) DeleteProject(c *gin.Context) {
 	userUUID, err := getUserId(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, dto.BadRequestError("failed to retrieve user id.", err.Error()))
+		c.JSON(http.StatusUnauthorized, dto.BadRequestError(c, "failed to retrieve user id.", err.Error()))
 		return
 	}
 
 	projectUUID, err := getProjectId(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError("Error retrieving project id.", err.Error()))
+		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, "Error retrieving project id.", err.Error()))
 	}
 
 	err = ph.ProjectService.DeleteProject(userUUID, projectUUID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.BadRequestError("Failed to delete project.", err.Error()))
+		c.JSON(http.StatusInternalServerError, dto.BadRequestError(c, "Failed to delete project.", err.Error()))
 		return
 	}
 
@@ -167,18 +167,18 @@ func (ph *ProjectHandlerImpl) AddProject(c *gin.Context) {
 
 	userUUID, err := getUserId(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, dto.BadRequestError("failed to retrieve user id.", err.Error()))
+		c.JSON(http.StatusUnauthorized, dto.BadRequestError(c, "failed to retrieve user id.", err.Error()))
 		return
 	}
 
 	if err = c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusInternalServerError, dto.BadRequestError("failed to parse request.", err.Error()))
+		c.JSON(http.StatusInternalServerError, dto.BadRequestError(c, "failed to parse request.", err.Error()))
 		return
 	}
 
 	project, err := ph.ProjectService.AddProject(userUUID, req.Name, req.Description)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.BadRequestError("Failed to create project.", err.Error()))
+		c.JSON(http.StatusInternalServerError, dto.BadRequestError(c, "Failed to create project.", err.Error()))
 		return
 	}
 
