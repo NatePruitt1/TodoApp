@@ -57,7 +57,7 @@ func main() {
 	projectService := services.NewProjectService(projectRepo)
 	projectHandler := handlers.NewProjectHandler(projectService)
 
-	api := router.Group("/api/v0")
+	api := router.Group("/api/v0", middleware.LoggingMiddleware())
 
 	// Auth Endpoints - Public
 	api.POST("/auth/register", userHandler.CreateAccountHandler)
