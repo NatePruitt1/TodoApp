@@ -96,7 +96,7 @@ func (uh *UserHandlerImpl) CreateAccountHandler(c *gin.Context) {
 	}
 
 	if message, details := validateUsernameAndPassword(req.Username, req.Password); message != "" {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError(message, details))
+		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, message, details))
 		uh.deleteRefreshToken(c)
 		return
 	}
@@ -138,7 +138,7 @@ func (uh *UserHandlerImpl) LoginHandler(c *gin.Context) {
 	}
 
 	if message, details := validateUsernameAndPassword(req.Username, req.Password); message != "" {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError(message, details))
+		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, message, details))
 		uh.deleteRefreshToken(c)
 		return
 	}
