@@ -32,6 +32,14 @@ function Login() {
 
     const handleSubmit = async (event: React.SubmitEvent<HTMLFormElement>) => {
         event.preventDefault();
+        
+        if(formData.password.trim().length < 6) {
+            return
+        }
+
+        if(formData.username.trim().length < 3) {
+            return
+        }
 
         try {
             let resp = await fetch(BASE_URL + "/auth/login",
