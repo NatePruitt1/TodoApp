@@ -14,6 +14,11 @@ import (
 
 const RTOKEN_PATH = "/api/v0/auth/refresh"
 
+const PASSWORD_MIN_LEN = 6
+const PASSWORD_MAX_LEN = 256
+const USERNAME_MIN_LEN = 3
+const USERNAME_MAX_LEN = 16
+
 // UserHandler interface allows DI for the user handler functionality.
 type UserHandler interface {
 	LoginHandler(c *gin.Context)
@@ -55,16 +60,14 @@ func strippedLen(value string) int {
 	return len(strings.TrimSpace(value))
 }
 
-func validateCredentialField(fieldName, value string, minLength int) string {
-	if strippedLen(value) < minLength {
-		return fmt.Sprintf("%s too short", fieldName)
+func hasSpace(s string) bool {
+	for _, i := range s {
+		if unicode.IsSpace(i) {
+			return true
+		}
 	}
 
-	if strings.IndexFunc(value, unicode.IsSpace) >= 0 {
-		return fmt.Sprintf("%s cannot contain spaces", fieldName)
-	}
-
-	return ""
+	return false
 }
 
 func hasUppercase(s string) bool {
@@ -87,29 +90,63 @@ func hasSpecial(s string) bool {
 	return false
 }
 
-func validatePassword(password string) string {
+// hasBannedUsernameChar reports whether s contains anything other than
+// letters, digits, underscores, or hyphens.
+func hasBannedUsernameChar(s string) bool {
+	for _, i := range s {
+		if !unicode.IsLetter(i) && !unicode.IsDigit(i) && i != '_' && i != '-' {
+			return true
+		}
+	}
+
+	return false
+}
+
+func validatePassword(password string, ctx *gin.Context) (bool, gin.H) {
 	//Check at least one uppercase
+	if hasSpace(password) {
+		return false, dto.BadRequestErrorWithCode(ctx, dto.ErrAuthPasswordNSC, "Password may not contain spaces.", "")
+	}
+
+	if strippedLen(password) < PASSWORD_MIN_LEN {
+		return false, dto.BadRequestErrorWithCode(ctx, dto.ErrAuthPasswordTooShort, fmt.Sprintf("Password must be atleast %d characters.", PASSWORD_MIN_LEN), "")
+	}
+
+	if strippedLen(password) >= PASSWORD_MAX_LEN {
+		return false, dto.BadRequestErrorWithCode(ctx, dto.ErrAuthPasswordTooLong, fmt.Sprintf("Password must be shorter that %d characters.", PASSWORD_MAX_LEN), "")
+	}
+
 	if !hasUppercase(password) {
-		return "password requires atleast 1 uppercase."
+		return false, dto.BadRequestErrorWithCode(ctx, dto.ErrAuthPasswordNoUppercase, "Password must have atleast 1 uppercase character.", "")
 	}
 
 	if !hasSpecial(password) {
-		return "password requires atleast 1 special character."
+		return false, dto.BadRequestErrorWithCode(ctx, dto.ErrAuthPasswordNSC, "Password must have atleast 1 special character.", "")
 	}
 
-	return ""
+	return true, gin.H{}
 }
 
-func validateUsernameAndPassword(username, password string) string {
-	if message := validateCredentialField("Username", username, 3); message != "" {
-		return message
+func validateUsername(username string, ctx *gin.Context) (bool, gin.H) {
+	if hasSpace(username) {
+		return false, dto.BadRequestErrorWithCode(ctx, dto.ErrAuthUsernameSpace, "Username may not contain spaces.", "")
 	}
 
-	if message := validateCredentialField("Password", password, 6); message != "" {
-		return message
+	if strippedLen(username) < USERNAME_MIN_LEN {
+		return false, dto.BadRequestErrorWithCode(ctx, dto.ErrAuthUsernameTooShort, fmt.Sprintf("Username must be atleast %d characters.", USERNAME_MIN_LEN), "")
 	}
 
-	return ""
+	if strippedLen(username) >= USERNAME_MAX_LEN {
+		return false, dto.BadRequestErrorWithCode(ctx, dto.ErrAuthUsernameTooLong, fmt.Sprintf("Username must be shorter that %d characters.", USERNAME_MAX_LEN), "")
+	}
+
+	trimmed := strings.TrimSpace(username)
+	firstOrLast := trimmed[0] == '_' || trimmed[0] == '-' || trimmed[len(trimmed)-1] == '_' || trimmed[len(trimmed)-1] == '-'
+	if hasBannedUsernameChar(trimmed) || firstOrLast {
+		return false, dto.BadRequestErrorWithCode(ctx, dto.ErrAuthUsernameSC, "Username contains a banned character, or a special character at the start/end.", "")
+	}
+
+	return true, gin.H{}
 }
 
 // Handles the creation or rejection of a new account on the create endpoint.
@@ -123,8 +160,16 @@ func (uh *UserHandlerImpl) CreateAccountHandler(c *gin.Context) {
 		return
 	}
 
-	if message := validateUsernameAndPassword(req.Username, req.Password); message != "" {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, message, ""))
+	validUsername, errResp := validateUsername(req.Username, c)
+	if !validUsername {
+		c.JSON(http.StatusBadRequest, errResp)
+		uh.deleteRefreshToken(c)
+		return
+	}
+
+	validPassword, errResp := validatePassword(req.Password, c)
+	if !validPassword {
+		c.JSON(http.StatusBadRequest, errResp)
 		uh.deleteRefreshToken(c)
 		return
 	}
@@ -165,15 +210,23 @@ func (uh *UserHandlerImpl) LoginHandler(c *gin.Context) {
 		return
 	}
 
-	if message := validateUsernameAndPassword(req.Username, req.Password); message != "" {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, message, ""))
+	validUsername, errResp := validateUsername(req.Username, c)
+	if !validUsername {
+		c.JSON(http.StatusBadRequest, errResp)
+		uh.deleteRefreshToken(c)
+		return
+	}
+
+	validPassword, errResp := validatePassword(req.Password, c)
+	if !validPassword {
+		c.JSON(http.StatusBadRequest, errResp)
 		uh.deleteRefreshToken(c)
 		return
 	}
 
 	resp, token, err := uh.UserService.AuthenticateAccount(context.Background(), req.Username, req.Password)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, "Failed to create account.", err.Error()))
+		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, "Failed to log in to account.", err.Error()))
 		uh.deleteRefreshToken(c)
 		return
 	}
@@ -210,8 +263,6 @@ func (uh *UserHandlerImpl) RefreshHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, "No refresh token provided.", ""))
 		return
 	}
-
-	fmt.Printf("Raw refresh token: %s\n", raw)
 
 	_, err = uh.RefreshTokenService.CheckToken(raw)
 	if err != nil {

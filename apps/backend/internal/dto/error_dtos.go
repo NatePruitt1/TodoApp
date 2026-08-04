@@ -26,10 +26,11 @@ const (
 	ErrAuthUsernameTooShort = "AUTH-002" // Username too short
 	ErrAuthUsernameTooLong  = "AUTH-003" // Username too long
 
-	ErrAuthPasswordSpace    = "AUTH-200" // Password contains a space.
-	ErrAuthPasswordNSC      = "AUTH-201" // Password does not contain a special character
-	ErrAuthPasswordTooShort = "AUTH-202" // Password is too short
-	ErrAuthPasswordTooLong  = "AUTH-203" // Password is too long
+	ErrAuthPasswordSpace       = "AUTH-200" // Password contains a space.
+	ErrAuthPasswordNSC         = "AUTH-201" // Password does not contain a special character
+	ErrAuthPasswordTooShort    = "AUTH-202" // Password is too short
+	ErrAuthPasswordTooLong     = "AUTH-203" // Password is too long
+	ErrAuthPasswordNoUppercase = "AUTH-204" // Password does not contain an uppercase character
 
 	// VAL: request validation failures.
 	ErrValInvalidID   = "VAL-100" // Route ID parameter missing or not a valid UUID.

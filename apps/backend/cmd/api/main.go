@@ -21,7 +21,7 @@ func main() {
 		fmt.Println("No .env file found, using system vars only.")
 	}
 
-	gin.SetMode(gin.TestMode)
+	gin.SetMode(gin.ReleaseMode)
 
 	router := gin.Default()
 

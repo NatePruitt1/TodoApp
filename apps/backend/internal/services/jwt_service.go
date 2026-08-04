@@ -3,7 +3,6 @@ package services
 import (
 	"backend/internal/models"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -16,7 +15,6 @@ type TokenClaims struct {
 }
 
 func GenerateToken(user models.User, secret string) (string, error) {
-	fmt.Println("Starting Gen token")
 	claims := TokenClaims{
 		UserID:   user.ID.String(),
 		Username: user.Username,

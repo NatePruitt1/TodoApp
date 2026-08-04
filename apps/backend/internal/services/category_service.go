@@ -3,7 +3,6 @@ package services
 import (
 	"backend/internal/models"
 	"errors"
-	"fmt"
 
 	"github.com/google/uuid"
 )
@@ -53,8 +52,6 @@ func (ps *ProjectServiceImpl) MoveCategory(categoryId uuid.UUID, index int) (*mo
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Printf("Category Index: %d\n", category.Index)
 
 	//Check if new index is valid.
 	if index >= 0 && index < len(project.Categories) {

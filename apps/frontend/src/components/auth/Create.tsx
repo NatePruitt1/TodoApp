@@ -5,6 +5,7 @@ import { useAuth } from '../AuthContext';
 import { jwtDecode } from 'jwt-decode';
 import type { JwtData } from '../../types/Jwt';
 import { type InputHandle, Input } from '../Input';
+import { validatePassword, validateUsername } from './validate';
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -23,19 +24,30 @@ function Create() {
             [name]: value,
         }));
         };
+
+        const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            handleChange(e)
+            const valid = validateUsername(e.target.value)
+            if(!valid.ok) {
+                usernameInputRef.current?.setError(valid.reason)
+            }
+        }
+
+        const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            handleChange(e)
+            const valid = validatePassword(e.target.value)
+            if(!valid.ok) {
+                passwordInputRef.current?.setError(valid.reason)
+            }
+        }
     
         const handleSubmit = async (event: React.SubmitEvent<HTMLFormElement>) => {
             event.preventDefault();
 
-            if(formData.password.trim().length < 6) {
-                alert("Password too short.")
-                return
-            }
+            const validUsername = validateUsername(formData.username)
+            const validPassword = validatePassword(formData.password)
 
-            if(formData.username.trim().length < 3) {
-                alert("Username too short.")
-                return
-            }
+            if(!validUsername.ok || !validPassword.ok) return;
         
             try {
                 console.log(BASE_URL)
@@ -82,14 +94,14 @@ function Create() {
                     <Input ref={usernameInputRef}
                         id="username-input" 
                         value={formData.username} 
-                        onChange={handleChange} 
+                        onChange={handleUsernameChange} 
                         type='text'
                         name='username'
                         placeholder="Enter username" />
                     <Input ref={passwordInputRef} 
                         id="password-input" 
                         value={formData.password} 
-                        onChange={handleChange} 
+                        onChange={handlePasswordChange} 
                         type='password'
                         name='password'
                         placeholder="Enter password" />
