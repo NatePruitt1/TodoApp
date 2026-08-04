@@ -1,5 +1,6 @@
 .auth-layout {
-    background-color: gray;
+    background-color: var(--background);
+    color: white;
     width: 100vw;
     height: 100vh;
     display: flex;
@@ -13,7 +14,10 @@
     width: min(100%, 32rem);
     translate: 0 -4vh;
     padding: 20px;
-    border: 2px solid black;
+    border: 2px solid var(--on-background);
     border-radius: 24px;
-    background-color: white;
+}
+
+.auth-link {
+    color: var(--primary);
 }

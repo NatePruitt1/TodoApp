@@ -1,16 +1,19 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import './Login.css'
 import { Link, useNavigate } from 'react-router';
 import { useAuth } from '../AuthContext';
 import { jwtDecode } from 'jwt-decode';
 import type { JwtData } from '../../types/Jwt';
+import { type InputHandle, Input } from '../Input';
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 
 function Create() {
     const [formData, setFormData] = useState({username: "", password: ""});
         const userContext = useAuth();
-    
+        const usernameInputRef = useRef<InputHandle>(null);
+        const passwordInputRef = useRef<InputHandle>(null);
+
         const navigate = useNavigate();
     
         const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -75,23 +78,24 @@ function Create() {
         return (
             <>
                 <form id="create-form" className="auth-form" onSubmit={handleSubmit}>
-                    <h1>Create Account for Todo-App</h1>
-                    <input id="username-input" 
+                    <h1>Create Account</h1>
+                    <Input ref={usernameInputRef}
+                        id="username-input" 
                         value={formData.username} 
                         onChange={handleChange} 
                         type='text'
                         name='username'
-                        placeholder="Enter username"></input>
-                    <input 
+                        placeholder="Enter username" />
+                    <Input ref={passwordInputRef} 
                         id="password-input" 
                         value={formData.password} 
                         onChange={handleChange} 
                         type='password'
                         name='password'
-                        placeholder="Enter password"></input>
-                    <button type='submit'>Login</button>
+                        placeholder="Enter password" />
+                    <button className="small-button" type='submit'>Create &rarr;</button>
                 </form>
-                <Link to={{pathname: "/login"}}>Create your account.</Link>
+                <Link className="auth-link" to={{pathname: "/login"}}>Log in to your account.</Link>
             </>
         )
 }

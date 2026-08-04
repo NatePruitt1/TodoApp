@@ -8,10 +8,41 @@ import { type InputHandle, Input } from '../Input';
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 
+const validateUsername = (username: string):{ok: boolean, reason: string} => {
+    const usernameRegex = /^[a-zA-Z0-9]+(?:[._-][a-zA-Z0-9]+)*$/
+    
+    if(!username || username.trim().length <= 3) {
+        return {
+            ok: false,
+            reason: "Username must be longer than 3 characters."
+        }
+    }
+
+    if(username.trim().length >= 16) {
+        return {
+            ok: false,
+            reason: "Username must be shorter than 16 characters"
+        }
+    }
+
+    if(!usernameRegex.test(username)) {
+        return {
+                ok: false,
+                reason: "Username my only contain A-Z, 0-9, \".\", \"_\", and \"-\". You may not repeat special characters."
+        }
+    }
+
+    return {
+        ok: true,
+        reason: ""
+    }
+}
+
 function Login() {
     const [formData, setFormData] = useState({username: "", password: ""});
     const userContext = useAuth();
     const usernameInputRef = useRef<InputHandle>(null);
+    const passwordInputRef = useRef<InputHandle>(null);
 
     const navigate = useNavigate();
 
@@ -25,8 +56,9 @@ function Login() {
 
     const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         handleChange(e)
-        if(e.target.value.length < 3) {
-            usernameInputRef.current?.setError("Username too short.")
+        const valid = validateUsername(e.target.value)
+        if(!valid.ok) {
+            usernameInputRef.current?.setError(valid.reason)
         }
     }
 
@@ -82,7 +114,7 @@ function Login() {
     return (
         <>
             <form id="login-form" className="auth-form" onSubmit={handleSubmit}>
-                <h1>Log in to Todo-App</h1>
+                <h1>Log In</h1>
                 <Input 
                     ref={usernameInputRef}
                     id="username-input" 
@@ -91,16 +123,17 @@ function Login() {
                     type='text'
                     name='username'
                     placeholder="Enter username" />
-                <input 
+                <Input 
+                    ref={passwordInputRef}
                     id="password-input" 
                     value={formData.password} 
                     onChange={handleChange} 
                     type='password'
                     name='password'
-                    placeholder="Enter password"></input>
-                <button type='submit'>Login</button>
+                    placeholder="Enter password" />
+                <button className='small-button' type='submit'>Login &rarr;</button>
             </form>
-            <Link to={{pathname: "/create"}}>Create an account.</Link>
+            <Link className="auth-link" to={{pathname: "/create"}}>Create an account.</Link>
         </>
     )
 }

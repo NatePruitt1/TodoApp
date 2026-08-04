@@ -1,0 +1,16 @@
+
+.form-input {
+    background-color: var(--surface);
+    color: white;
+    border: 1px solid;
+    padding: 0.5rem;
+    border-radius: 4px;
+}
+
+.form-input-error {
+    color: var(--error);
+    font-size: small;
+    margin-top: 2px;
+    overflow-wrap: break-word;
+    word-break: break-all;
+}

@@ -1,0 +1,1 @@
+ssh droplet 'bash -s' < ./deploy.sh

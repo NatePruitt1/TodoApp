@@ -1,9 +1,19 @@
 :root {
-    --stormy-teal: #006D77;
-    --pearl-aqua: #83C5BE;
-    --alice-blue: #EDF6F9;
-    --almond-silk: #FFDDD2;
-    --tangerine-dream: #E29578;
+    --background: #121212;
+    --surface: #121212;
+
+    --error: #CF6679;
+
+    --primary: #BB86FC;
+    --primary-variant: #3700B3;
+    --secondary: #03DAC6;
+
+    --on-primary: #000;
+    --on-secondary: #000;
+    --on-background: #FFF;
+    --on-surface: #FFF;
+    --on-error: #000;
+
     font-family: "Courier New", Courier, monospace;
 }
 
@@ -76,4 +86,14 @@ button:focus {
 
 .medium-icon {
     width: 2rem;
+}
+
+.small-button {
+    background-color: var(--primary);
+    color: var(--on-primary);
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem 0.5rem 1rem;
+    font-size: medium;
+    font-weight: bolder;
 }

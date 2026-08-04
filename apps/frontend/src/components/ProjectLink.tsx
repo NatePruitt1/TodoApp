@@ -19,9 +19,6 @@ export function ProjectLink({project, reloadProjects}: {project: Project, reload
             reloadProjects()
         } catch(error) {
             console.error(error)
-            if(error instanceof ApiError) {
-                console.error(error.details)
-            }
             alert("Failed to delete project.")
         }
     }

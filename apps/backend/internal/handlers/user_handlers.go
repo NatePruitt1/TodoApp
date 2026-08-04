@@ -13,7 +13,6 @@ import (
 )
 
 const RTOKEN_PATH = "/api/v0/auth/refresh"
-const BLOCKED_CREDENTIAL_CHARS = "<>{}[]()\"'`\\|;:,&/"
 
 // UserHandler interface allows DI for the user handler functionality.
 type UserHandler interface {
@@ -56,32 +55,61 @@ func strippedLen(value string) int {
 	return len(strings.TrimSpace(value))
 }
 
-func validateCredentialField(fieldName, value string, minLength int) (string, string) {
+func validateCredentialField(fieldName, value string, minLength int) string {
 	if strippedLen(value) < minLength {
-		return fmt.Sprintf("%s too short", fieldName), ""
+		return fmt.Sprintf("%s too short", fieldName)
 	}
 
 	if strings.IndexFunc(value, unicode.IsSpace) >= 0 {
-		return fmt.Sprintf("%s cannot contain spaces", fieldName), ""
+		return fmt.Sprintf("%s cannot contain spaces", fieldName)
 	}
 
-	if strings.ContainsAny(value, BLOCKED_CREDENTIAL_CHARS) {
-		return fmt.Sprintf("%s contains blocked special characters", fieldName), fmt.Sprintf("Blocked characters: %s", BLOCKED_CREDENTIAL_CHARS)
-	}
-
-	return "", ""
+	return ""
 }
 
-func validateUsernameAndPassword(username, password string) (string, string) {
-	if message, details := validateCredentialField("Username", username, 3); message != "" {
-		return message, details
+func hasUppercase(s string) bool {
+	for _, i := range s {
+		if unicode.IsUpper(i) {
+			return true
+		}
 	}
 
-	if message, details := validateCredentialField("Password", password, 6); message != "" {
-		return message, details
+	return false
+}
+
+func hasSpecial(s string) bool {
+	for _, i := range s {
+		if unicode.IsPunct(i) || unicode.IsSymbol(i) {
+			return true
+		}
 	}
 
-	return "", ""
+	return false
+}
+
+func validatePassword(password string) string {
+	//Check at least one uppercase
+	if !hasUppercase(password) {
+		return "password requires atleast 1 uppercase."
+	}
+
+	if !hasSpecial(password) {
+		return "password requires atleast 1 special character."
+	}
+
+	return ""
+}
+
+func validateUsernameAndPassword(username, password string) string {
+	if message := validateCredentialField("Username", username, 3); message != "" {
+		return message
+	}
+
+	if message := validateCredentialField("Password", password, 6); message != "" {
+		return message
+	}
+
+	return ""
 }
 
 // Handles the creation or rejection of a new account on the create endpoint.
@@ -95,8 +123,8 @@ func (uh *UserHandlerImpl) CreateAccountHandler(c *gin.Context) {
 		return
 	}
 
-	if message, details := validateUsernameAndPassword(req.Username, req.Password); message != "" {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, message, details))
+	if message := validateUsernameAndPassword(req.Username, req.Password); message != "" {
+		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, message, ""))
 		uh.deleteRefreshToken(c)
 		return
 	}
@@ -137,8 +165,8 @@ func (uh *UserHandlerImpl) LoginHandler(c *gin.Context) {
 		return
 	}
 
-	if message, details := validateUsernameAndPassword(req.Username, req.Password); message != "" {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, message, details))
+	if message := validateUsernameAndPassword(req.Username, req.Password); message != "" {
+		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, message, ""))
 		uh.deleteRefreshToken(c)
 		return
 	}
