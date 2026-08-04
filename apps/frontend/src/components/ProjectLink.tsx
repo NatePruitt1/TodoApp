@@ -3,7 +3,6 @@ import type { Project } from "../types/Project";
 import { useProjectsApi } from "../api/projects";
 import trashUrl from "../../public/material-symbols--delete-outline.svg"
 import arrowUrl from "../../public/material-symbols--arrow-menu-open.svg"
-import { ApiError } from "../api/client";
 
 export function ProjectLink({project, reloadProjects}: {project: Project, reloadProjects: {(): void}}) {
     const navigate = useNavigate();
