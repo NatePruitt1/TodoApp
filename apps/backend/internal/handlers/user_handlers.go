@@ -19,6 +19,8 @@ const PASSWORD_MAX_LEN = 256
 const USERNAME_MIN_LEN = 3
 const USERNAME_MAX_LEN = 16
 
+const USERNAME_ALLOWED_SPECIALS = ".-_"
+
 // UserHandler interface allows DI for the user handler functionality.
 type UserHandler interface {
 	LoginHandler(c *gin.Context)
@@ -94,7 +96,7 @@ func hasSpecial(s string) bool {
 // letters, digits, underscores, or hyphens.
 func hasBannedUsernameChar(s string) bool {
 	for _, i := range s {
-		if !unicode.IsLetter(i) && !unicode.IsDigit(i) && i != '_' && i != '-' {
+		if !unicode.IsLetter(i) && !unicode.IsDigit(i) && !strings.ContainsRune(USERNAME_ALLOWED_SPECIALS, i) {
 			return true
 		}
 	}
@@ -140,9 +142,9 @@ func validateUsername(username string, ctx *gin.Context) (bool, gin.H) {
 		return false, dto.BadRequestErrorWithCode(ctx, dto.ErrAuthUsernameTooLong, fmt.Sprintf("Username must be shorter that %d characters.", USERNAME_MAX_LEN), "")
 	}
 
-	trimmed := strings.TrimSpace(username)
-	firstOrLast := trimmed[0] == '_' || trimmed[0] == '-' || trimmed[len(trimmed)-1] == '_' || trimmed[len(trimmed)-1] == '-'
-	if hasBannedUsernameChar(trimmed) || firstOrLast {
+	trimmed := []rune(strings.TrimSpace(username))
+	firstOrLast := strings.ContainsRune(USERNAME_ALLOWED_SPECIALS, trimmed[0]) || strings.ContainsRune(USERNAME_ALLOWED_SPECIALS, trimmed[len(trimmed)-1])
+	if hasBannedUsernameChar(string(trimmed)) || firstOrLast {
 		return false, dto.BadRequestErrorWithCode(ctx, dto.ErrAuthUsernameSC, "Username contains a banned character, or a special character at the start/end.", "")
 	}
 
@@ -176,7 +178,7 @@ func (uh *UserHandlerImpl) CreateAccountHandler(c *gin.Context) {
 
 	resp, token, err := uh.UserService.CreateAccount(context.Background(), req.Username, req.Password)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, "Failed to create account.", err.Error()))
+		c.JSON(http.StatusBadRequest, dto.BadRequestErrorWithCode(c, dto.ErrAuthBadCredentials, "Failed to create account.", err.Error()))
 		uh.deleteRefreshToken(c)
 		return
 	}
@@ -226,7 +228,7 @@ func (uh *UserHandlerImpl) LoginHandler(c *gin.Context) {
 
 	resp, token, err := uh.UserService.AuthenticateAccount(context.Background(), req.Username, req.Password)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, "Failed to log in to account.", err.Error()))
+		c.JSON(http.StatusBadRequest, dto.BadRequestErrorWithCode(c, dto.ErrAuthBadCredentials, "Failed to log in to account.", err.Error()))
 		uh.deleteRefreshToken(c)
 		return
 	}

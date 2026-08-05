@@ -1,6 +1,6 @@
 import { useAuth } from "../components/AuthContext";
 import { requireAuth } from "../utils/Auth";
-import { apiFetch } from "./client";
+import { apiFetch, apiRequest } from "./client";
 
 export function useApi() {
     const authContext = useAuth();
@@ -14,5 +14,13 @@ export function useApi() {
         post: <T>(path: string, body: unknown) => makeAuthRequest<T>(path, {method:"POST", body: JSON.stringify(body)}),
         patch: <T>(path: string, body: unknown) => makeAuthRequest<T>(path, {method:"PATCH", body: JSON.stringify(body)}),
         delete: <T>(path: string) => makeAuthRequest<T>(path, {method:"DELETE"}),
+    }
+}
+
+export function usePublicApi() {
+    const makeRequest = <T>(path: string, init?: RequestInit) => apiRequest<T>(path, null, init);
+
+    return {
+        post: <T>(path: string, body: unknown) => makeRequest<T>(path, {method: "POST", body: JSON.stringify(body)}),
     }
 }

@@ -5,18 +5,16 @@ import { useAuth } from '../AuthContext';
 import { jwtDecode } from 'jwt-decode';
 import { type JwtData } from '../../types/Jwt';
 import { type InputHandle, Input } from '../Input';
-import { validatePassword, validateUsername } from './validate';
-
-const BASE_URL = import.meta.env.VITE_API_URL;
-
-
+import { handleLoginFormError, validatePassword, validateUsername } from './validate';
+import { usePublicApi } from '../../api/useApi';
+import { ApiError } from '../../api/client';
 
 function Login() {
     const [formData, setFormData] = useState({username: "", password: ""});
     const userContext = useAuth();
     const usernameInputRef = useRef<InputHandle>(null);
     const passwordInputRef = useRef<InputHandle>(null);
-
+    const publicApi = usePublicApi();
     const navigate = useNavigate();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -52,40 +50,32 @@ function Login() {
         if(!validUsername.ok || !validPassword.ok) return;
 
         try {
-            let resp = await fetch(BASE_URL + "/auth/login",
-                {
-                    method: "POST",
-                    body: JSON.stringify(formData),
-                    credentials: "include"
-                }
-            )
+            let resp = await publicApi.post("/auth/login", formData) 
 
-            if(resp.ok) {
-                const authHeader = resp.headers.get("Authorization")
-                const token = authHeader && authHeader.replace(/^Bearer\s+/i, '');
-                
-                if(!token) {
-                    throw new Error("Token not included in response.")
-                }
-
-                userContext.setUsername(formData.username);
-                userContext.setJWT(token)
-
-                const payload = jwtDecode<JwtData>(token)
-
-                userContext.setExpiry(new Date(payload.exp * 1000))
-
-                setFormData({username: "", password: ""})
-                navigate("/")
-            } else {
-                console.log(await resp.json())
-                setFormData({username: "", password: ""})
-                alert("Login failed.")
+            const authHeader = resp.headers.get("Authorization")
+            const token = authHeader && authHeader.replace(/^Bearer\s+/i, '');
+            
+            if(!token) {
+                throw new Error("Token not included in response.")
             }
+
+            userContext.setUsername(formData.username);
+            userContext.setJWT(token)
+
+            const payload = jwtDecode<JwtData>(token)
+
+            userContext.setExpiry(new Date(payload.exp * 1000))
+
+            setFormData({username: "", password: ""})
+            navigate("/")
+            
         } catch(e) {
             console.log(e)
-            setFormData({username: "", password: ""})
-            alert("Login failed.")
+            if(e instanceof ApiError && usernameInputRef.current && passwordInputRef.current) {
+                usernameInputRef.current.setError("")
+                passwordInputRef.current.setError("")
+                handleLoginFormError(e.error_code, usernameInputRef.current, passwordInputRef.current)
+            }
         }
     };
 
