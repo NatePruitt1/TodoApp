@@ -4,11 +4,22 @@ import (
 	"backend/internal/models"
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+var (
+	ErrProjectNotFound     = errors.New("project not found.")
+	ErrCategoryNotFound    = errors.New("category not found.")
+	ErrCardNotFound        = errors.New("card not found.")
+	ErrNotResourceOwner    = errors.New("user does not own resource.")
+	ErrProjectNameConflict = errors.New("project name already taken for user.")
+	ErrInvalidOwner        = errors.New("owner does not exist.")
 )
 
 type ProjectRepository interface {
@@ -56,7 +67,7 @@ func (ur *ProjectRepositoryImpl) Save(project *models.Project) error {
 		WHERE id = $1
 	`
 
-	_, err := ur.db.Exec(context.Background(), insertQ,
+	tag, err := ur.db.Exec(context.Background(), insertQ,
 		project.ID,
 		project.Name,
 		project.Description,
@@ -65,19 +76,39 @@ func (ur *ProjectRepositoryImpl) Save(project *models.Project) error {
 
 	if err != nil {
 		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
-			if pgErr.Code == pgerrcode.UniqueViolation {
-				_, err = ur.db.Exec(context.Background(), updateQ,
-					project.ID,
-					project.Name,
-					project.Description,
-					project.OwnerID,
-				)
+
+		if !errors.As(err, &pgErr) {
+			return fmt.Errorf("save project %s: %w", project.ID, err)
+		}
+
+		switch pgErr.Code {
+		case pgerrcode.UniqueViolation:
+			utag, uerr := ur.db.Exec(context.Background(), updateQ,
+				project.ID,
+				project.Name,
+				project.Description,
+				project.OwnerID,
+			)
+			if uerr != nil {
+				return fmt.Errorf("save project %s: update after conflict: %w", project.ID, uerr)
 			}
+			if utag.RowsAffected() == 0 {
+				return ErrProjectNotFound
+			}
+			return nil
+
+		case pgerrcode.ForeignKeyViolation:
+			return fmt.Errorf("save project %s: %w", project.ID, ErrInvalidOwner)
+		default:
+			return fmt.Errorf("save project %s: %w", project.ID, err)
 		}
 	}
 
-	return err
+	if tag.RowsAffected() == 0 {
+		return ErrProjectNotFound
+	}
+
+	return nil
 }
 
 func (ur *ProjectRepositoryImpl) Delete(id uuid.UUID) error {
@@ -87,8 +118,17 @@ func (ur *ProjectRepositoryImpl) Delete(id uuid.UUID) error {
 		
 	`
 
-	_, err := ur.db.Exec(context.Background(), q, id)
-	return err
+	tag, err := ur.db.Exec(context.Background(), q, id)
+
+	if err != nil {
+		return fmt.Errorf("delete project %s: %w", id, err)
+	}
+
+	if tag.RowsAffected() == 0 {
+		return ErrProjectNotFound
+	}
+
+	return nil
 }
 
 func (ur *ProjectRepositoryImpl) GetByID(id uuid.UUID) (*models.Project, error) {
@@ -106,7 +146,13 @@ func (ur *ProjectRepositoryImpl) GetByID(id uuid.UUID) (*models.Project, error) 
 		&project.OwnerID,
 	)
 
-	return &project, err
+	if err == pgx.ErrNoRows {
+		return nil, ErrProjectNotFound
+	} else if err != nil {
+		return nil, fmt.Errorf("get project by id %s: %w", id, err)
+	}
+
+	return &project, nil
 }
 
 func (ur *ProjectRepositoryImpl) GetAllUserProjects(owner_id uuid.UUID) ([]*models.Project, error) {
@@ -118,7 +164,21 @@ func (ur *ProjectRepositoryImpl) GetAllUserProjects(owner_id uuid.UUID) ([]*mode
 
 	rows, err := ur.db.Query(context.Background(), q, owner_id)
 	if err != nil {
-		return nil, err
+		if err == pgx.ErrNoRows {
+			return nil, ErrProjectNotFound
+		}
+
+		var pgErr *pgconn.PgError
+		if !errors.As(err, &pgErr) {
+			return nil, fmt.Errorf("get all user projects %s: %w", owner_id, err)
+		}
+
+		switch pgErr.Code {
+		case pgerrcode.ForeignKeyViolation:
+			return nil, fmt.Errorf("get all user projects %s: %w", owner_id, ErrUserNotFound)
+		default:
+			return nil, fmt.Errorf("get all user projects %s: %w", owner_id, err)
+		}
 	}
 	defer rows.Close()
 
@@ -131,14 +191,14 @@ func (ur *ProjectRepositoryImpl) GetAllUserProjects(owner_id uuid.UUID) ([]*mode
 			&project.Description,
 			&project.OwnerID,
 		); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("get all user projects %s: %w", owner_id, err)
 		}
 
 		projects = append(projects, &project)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get all user projects %s: %w", owner_id, err)
 	}
 
 	return projects, nil
