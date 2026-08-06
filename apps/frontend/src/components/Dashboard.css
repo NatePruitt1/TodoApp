@@ -4,16 +4,11 @@
     flex-direction: column;
 }
 
-.dashboard-header-bar {
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    flex-shrink: 0;
-    display: flex;
-    padding-left: 20px;
-    border-bottom: 3px solid gray;
-    background-color: white;
-    justify-content: space-between;
+#dashboard-create-dialog {
+    border: 2px solid;
+    border-radius: 8px;
+    background-color: var(--surface);
+    color: var(--on-surface);
 }
 
 .dashboard-create-header {
@@ -43,7 +38,9 @@
     margin: 8px;
     padding-left: 1rem;
     width: 100%;
-    border: 1px solid gray;
+    color: var(--on-surface);
+    background-color: var(--surface);
+    border: 1px solid var(--on-background);
     border-radius: 4px;
 }
 

@@ -6,8 +6,9 @@ import { useProjectsApi } from "../api/projects";
 import { useCategoriesApi } from "../api/categories";
 import "./Project.css"
 
-import addUrl from "../../public/material-symbols--add.svg"
+import addUrl from "../../public/icons8-plus-50.png"
 import { Header } from "./Header";
+import { Input } from "./Input";
 
 interface ProjectState {
     project: Project
@@ -79,14 +80,14 @@ export function ProjectScreen() {
                         <p className="category-title">Add Category</p>
                     </div>
                     <form id="create-category-form" onSubmit={addCategory}>
-                        <input id="dashboard-name-input"
+                        <Input id="dashboard-name-input"
                             value={formData.name}
                             onChange={handleChange}
                             type="text"
                             name="name" 
                             placeholder="Enter Your Category's Name." 
                             autoComplete="off" />
-                        <button type="submit" className="tiny-icon-button"><img src={addUrl} /></button>
+                        <button type="submit" className="tiny-icon-button"><img className="medium-icon" src={addUrl} /></button>
                     </form>
                 </div>
             </div>
