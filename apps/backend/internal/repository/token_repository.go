@@ -3,10 +3,16 @@ package repository
 import (
 	"backend/internal/models"
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+var (
+	ErrRefreshTokenNotFound = errors.New("refresh token not found")
 )
 
 type RefreshTokenRepository interface {
@@ -40,11 +46,13 @@ func (rtr *RefreshTokenRepositoryImpl) GetByUser(userId uuid.UUID) (models.Refre
 		&token.IssuedAt,
 	)
 
-	if err != nil {
-		return models.RefreshToken{}, err
+	if errors.Is(err, pgx.ErrNoRows) {
+		return models.RefreshToken{}, ErrRefreshTokenNotFound
+	} else if err != nil {
+		return models.RefreshToken{}, fmt.Errorf("GetRefreshTokenByUser: %w", err)
+	} else {
+		return token, nil
 	}
-
-	return token, nil
 }
 
 func (rtr *RefreshTokenRepositoryImpl) Create(token models.RefreshToken) error {
@@ -60,7 +68,11 @@ func (rtr *RefreshTokenRepositoryImpl) Create(token models.RefreshToken) error {
 		token.IssuedAt,
 	)
 
-	return err
+	if err != nil {
+		return fmt.Errorf("CreateRefreshToken: %w", err)
+	}
+
+	return nil
 }
 
 func (rtr *RefreshTokenRepositoryImpl) Get(hash string) (models.RefreshToken, error) {
@@ -77,11 +89,13 @@ func (rtr *RefreshTokenRepositoryImpl) Get(hash string) (models.RefreshToken, er
 		&token.IssuedAt,
 	)
 
-	if err != nil {
-		return models.RefreshToken{}, err
+	if errors.Is(err, pgx.ErrNoRows) {
+		return models.RefreshToken{}, ErrRefreshTokenNotFound
+	} else if err != nil {
+		return models.RefreshToken{}, fmt.Errorf("GetRefreshToken: %w", err)
+	} else {
+		return token, nil
 	}
-
-	return token, nil
 }
 
 func (rtr *RefreshTokenRepositoryImpl) Delete(hash string) error {
@@ -92,11 +106,10 @@ func (rtr *RefreshTokenRepositoryImpl) Delete(hash string) error {
 
 	tag, err := rtr.db.Exec(context.Background(), q, hash)
 	if err != nil {
-		return err
+		return fmt.Errorf("DeleteRefreshToken: %w", err)
 	} else if tag.RowsAffected() == 0 {
-		return pgx.ErrNoRows
+		return ErrRefreshTokenNotFound
 	} else {
 		return nil
 	}
-
 }

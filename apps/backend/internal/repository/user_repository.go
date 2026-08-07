@@ -4,14 +4,20 @@ import (
 	"backend/internal/models"
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-var ErrUserNotFound = errors.New("user not found")
+var (
+	ErrUserNotFound  = errors.New("user not found")
+	ErrUsernameTaken = errors.New("username taken.")
+)
 
 type UserRepository interface {
 	Create(user models.User) error
@@ -45,7 +51,15 @@ func (r *UserRepositoryImpl) Create(user models.User) error {
 		user.LastLogin,
 	)
 
-	return err
+	if pgErr := (*pgconn.PgError)(nil); errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+		return ErrUsernameTaken
+	}
+
+	if err != nil {
+		return fmt.Errorf("CreateUser: %w", err)
+	}
+
+	return nil
 }
 
 func (r *UserRepositoryImpl) Delete(id uuid.UUID) error {
@@ -56,7 +70,7 @@ func (r *UserRepositoryImpl) Delete(id uuid.UUID) error {
 
 	tag, err := r.db.Exec(context.Background(), q, id)
 	if err != nil {
-		return err
+		return fmt.Errorf("DeleteUser: %w", err)
 	} else if tag.RowsAffected() == 0 {
 		return ErrUserNotFound
 	} else {
@@ -84,7 +98,7 @@ func (r *UserRepositoryImpl) GetByUsername(username string) (models.User, error)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return models.User{}, ErrUserNotFound
 	} else if err != nil {
-		return models.User{}, err
+		return models.User{}, fmt.Errorf("GetUserByUsername: %w", err)
 	} else {
 		return user, nil
 	}
@@ -110,7 +124,7 @@ func (r *UserRepositoryImpl) GetByID(id uuid.UUID) (models.User, error) {
 	if errors.Is(err, pgx.ErrNoRows) {
 		return models.User{}, ErrUserNotFound
 	} else if err != nil {
-		return models.User{}, err
+		return models.User{}, fmt.Errorf("GetUserById: %w", err)
 	} else {
 		return user, nil
 	}
@@ -125,7 +139,7 @@ func (r *UserRepositoryImpl) UpdateLastLogin(userID uuid.UUID, at time.Time) err
 
 	tag, err := r.db.Exec(context.Background(), q, at, userID)
 	if err != nil {
-		return err
+		return fmt.Errorf("UpdateLastLogin: %w", err)
 	}
 	if tag.RowsAffected() == 0 {
 		return ErrUserNotFound
