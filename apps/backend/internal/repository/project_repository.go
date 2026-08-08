@@ -66,11 +66,16 @@ func (ur *ProjectRepositoryImpl) queryOne(ctx context.Context, notFoundError err
 }
 
 // Pass in pool instead of reciever function due to golang type limitations.
-func queryMany[T any](ctx context.Context, pool *pgxpool.Pool, query string, args []interface{}, scan func(pgx.Rows) (*T, error), funcName string) ([]*T, error) {
+func queryMany[T any](ctx context.Context, pool *pgxpool.Pool, query string, notFoundError error, args []interface{}, scan func(pgx.Rows) (*T, error), funcName string) ([]*T, error) {
 	rows, err := pool.Query(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("%s :%w", funcName, err)
+		if err == pgx.ErrNoRows {
+			return nil, notFoundError
+		} else {
+			return nil, fmt.Errorf("%s :%w", funcName, err)
+		}
 	}
+
 	defer rows.Close()
 
 	results := make([]*T, 0)

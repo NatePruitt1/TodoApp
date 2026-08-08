@@ -3,7 +3,6 @@ package services
 import (
 	"backend/internal/models"
 	"backend/internal/repository"
-	"errors"
 	"slices"
 
 	"github.com/google/uuid"
@@ -17,20 +16,20 @@ type ProjectService interface {
 	CheckProjectOwner(projectId, userId uuid.UUID) error
 
 	// Category Services
-	GetCategory(categoryId uuid.UUID) (*models.Category, error)
-	AddCategory(projectId uuid.UUID, categoryName string) (*models.Category, error)
-	DeleteCategory(categoryId uuid.UUID) error
-	MoveCategory(categoryId uuid.UUID, index int) (*models.Category, error)
-	RenameCategory(categoryId uuid.UUID, name string) (*models.Category, error)
+	GetCategory(userId, categoryId uuid.UUID) (*models.Category, error)
+	AddCategory(userId, projectId uuid.UUID, categoryName string) (*models.Category, error)
+	DeleteCategory(userId, categoryId uuid.UUID) error
+	MoveCategory(userId, categoryId uuid.UUID, index int) (*models.Category, error)
+	RenameCategory(userId, categoryId uuid.UUID, name string) (*models.Category, error)
 	CheckCategoryOwner(categoryId, userId uuid.UUID) error
 
 	// Card Services
-	GetCard(cardId uuid.UUID) (*models.Card, error)
-	AddCard(categoryId uuid.UUID, name, content string) (*models.Card, error)
-	DeleteCard(cardId uuid.UUID) error
-	MoveCard(cardId, categoryId uuid.UUID) (*models.Card, error)
-	RenameCard(cardId uuid.UUID, name string) (*models.Card, error)
-	EditCard(cardId uuid.UUID, content string) (*models.Card, error)
+	GetCard(userId, cardId uuid.UUID) (*models.Card, error)
+	AddCard(userId, categoryId uuid.UUID, name, content string) (*models.Card, error)
+	DeleteCard(userId, cardId uuid.UUID) error
+	MoveCard(userId, cardId, categoryId uuid.UUID) (*models.Card, error)
+	RenameCard(userId, cardId uuid.UUID, name string) (*models.Card, error)
+	EditCard(userId, cardId uuid.UUID, content string) (*models.Card, error)
 	CheckCardOwner(cardId, userId uuid.UUID) error
 }
 
@@ -60,7 +59,7 @@ func (ps *ProjectServiceImpl) DeleteProject(userId, projectId uuid.UUID) error {
 	}
 
 	if project.OwnerID != userId {
-		return errors.New("User does not own project.")
+		return repository.ErrNotResourceOwner
 	}
 
 	return ps.ProjectRepository.Delete(projectId)
@@ -74,7 +73,7 @@ func (ps *ProjectServiceImpl) AddProject(userId uuid.UUID, name, description str
 
 	exists := slices.ContainsFunc(projects, func(p *models.Project) bool { return p.Name == name })
 	if exists {
-		return nil, errors.New("Project name taken.")
+		return nil, repository.ErrProjectNameConflict
 	}
 
 	newProject := models.Project{
@@ -99,7 +98,7 @@ func (ps *ProjectServiceImpl) GetProject(userId, projectId uuid.UUID) (*models.P
 	}
 
 	if project.OwnerID != userId {
-		return nil, errors.New("User does not own project.")
+		return nil, repository.ErrNotResourceOwner
 	}
 
 	return project, nil

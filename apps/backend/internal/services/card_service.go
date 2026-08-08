@@ -11,11 +11,19 @@ func (ps *ProjectServiceImpl) CheckCardOwner(cardId, userId uuid.UUID) error {
 	return ps.ProjectRepository.CheckCardOwner(cardId, userId)
 }
 
-func (ps *ProjectServiceImpl) GetCard(cardId uuid.UUID) (*models.Card, error) {
+func (ps *ProjectServiceImpl) GetCard(userId, cardId uuid.UUID) (*models.Card, error) {
+	err := ps.CheckCardOwner(cardId, userId)
+	if err != nil {
+		return nil, err
+	}
 	return ps.ProjectRepository.GetCardByID(cardId)
 }
 
-func (ps *ProjectServiceImpl) AddCard(categoryId uuid.UUID, name, content string) (*models.Card, error) {
+func (ps *ProjectServiceImpl) AddCard(userId, categoryId uuid.UUID, name, content string) (*models.Card, error) {
+	err := ps.CheckCategoryOwner(categoryId, userId)
+	if err != nil {
+		return nil, err
+	}
 	newCard := models.Card{
 		ID:         uuid.New(),
 		CategoryID: categoryId,
@@ -24,7 +32,7 @@ func (ps *ProjectServiceImpl) AddCard(categoryId uuid.UUID, name, content string
 		Finished:   false,
 	}
 
-	err := ps.ProjectRepository.SaveCard(&newCard)
+	err = ps.ProjectRepository.SaveCard(&newCard)
 	if err != nil {
 		return nil, err
 	}
@@ -32,11 +40,25 @@ func (ps *ProjectServiceImpl) AddCard(categoryId uuid.UUID, name, content string
 	return &newCard, nil
 }
 
-func (ps *ProjectServiceImpl) DeleteCard(cardId uuid.UUID) error {
+func (ps *ProjectServiceImpl) DeleteCard(userId, cardId uuid.UUID) error {
+	err := ps.CheckCardOwner(cardId, userId)
+	if err != nil {
+		return err
+	}
 	return ps.ProjectRepository.DeleteCard(cardId)
 }
 
-func (ps *ProjectServiceImpl) MoveCard(cardId, categoryId uuid.UUID) (*models.Card, error) {
+func (ps *ProjectServiceImpl) MoveCard(userId, cardId, categoryId uuid.UUID) (*models.Card, error) {
+	err := ps.CheckCategoryOwner(categoryId, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	err = ps.CheckCardOwner(cardId, userId)
+	if err != nil {
+		return nil, err
+	}
+
 	card, err := ps.ProjectRepository.GetCardByID(cardId)
 	if err != nil {
 		return nil, err
@@ -65,7 +87,12 @@ func (ps *ProjectServiceImpl) MoveCard(cardId, categoryId uuid.UUID) (*models.Ca
 	return card, nil
 }
 
-func (ps *ProjectServiceImpl) RenameCard(cardId uuid.UUID, name string) (*models.Card, error) {
+func (ps *ProjectServiceImpl) RenameCard(userId, cardId uuid.UUID, name string) (*models.Card, error) {
+	err := ps.CheckCardOwner(cardId, userId)
+	if err != nil {
+		return nil, err
+	}
+
 	card, err := ps.ProjectRepository.GetCardByID(cardId)
 	if err != nil {
 		return nil, err
@@ -80,7 +107,12 @@ func (ps *ProjectServiceImpl) RenameCard(cardId uuid.UUID, name string) (*models
 	return card, nil
 }
 
-func (ps *ProjectServiceImpl) EditCard(cardId uuid.UUID, content string) (*models.Card, error) {
+func (ps *ProjectServiceImpl) EditCard(userId, cardId uuid.UUID, content string) (*models.Card, error) {
+	err := ps.CheckCardOwner(cardId, userId)
+	if err != nil {
+		return nil, err
+	}
+
 	card, err := ps.ProjectRepository.GetCardByID(cardId)
 	if err != nil {
 		return nil, err

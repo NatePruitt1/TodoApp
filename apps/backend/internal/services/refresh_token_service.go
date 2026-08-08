@@ -8,10 +8,13 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 )
+
+var ErrRefreshTokenExpired = errors.New("refresh token expired.")
 
 type RefreshTokenService interface {
 	CreateToken(userId uuid.UUID) (models.RefreshToken, error)
@@ -47,7 +50,7 @@ func generateRefreshToken() (string, string, error) {
 func (rts *RefreshTokenServiceImpl) CreateToken(userId uuid.UUID) (models.RefreshToken, error) {
 	raw, id, err := generateRefreshToken()
 	if err != nil {
-		return models.RefreshToken{}, err
+		return models.RefreshToken{}, fmt.Errorf("CreateToken: %w", err)
 	}
 
 	token := models.RefreshToken{
@@ -74,7 +77,7 @@ func (rts *RefreshTokenServiceImpl) CheckTokenForUser(userId uuid.UUID) (models.
 
 	if time.Now().After(token.ExpiresAt) {
 		rts.repo.Delete(token.Hash)
-		return models.RefreshToken{}, errors.New("Token is expired.")
+		return models.RefreshToken{}, ErrRefreshTokenExpired
 	}
 
 	return token, nil
@@ -91,7 +94,7 @@ func (rts *RefreshTokenServiceImpl) CheckToken(id string) (models.RefreshToken, 
 
 	if time.Now().After(token.ExpiresAt) {
 		rts.repo.Delete(hash)
-		return models.RefreshToken{}, errors.New("Token is expired.")
+		return models.RefreshToken{}, ErrRefreshTokenExpired
 	}
 
 	return token, nil
@@ -106,7 +109,7 @@ func (rts *RefreshTokenServiceImpl) UpdateTokenByHash(hash string) (models.Refre
 	rts.repo.Delete(hash)
 
 	if time.Now().After(token.ExpiresAt) {
-		return models.RefreshToken{}, errors.New("Token is expired.")
+		return models.RefreshToken{}, ErrRefreshTokenExpired
 	}
 
 	return rts.CreateToken(token.UserId)

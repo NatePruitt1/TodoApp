@@ -3,10 +3,13 @@ package services
 import (
 	"backend/internal/models"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
+
+var ErrInvalidToken = errors.New("invalid token.")
 
 type TokenClaims struct {
 	UserID   string `json:"id"`
@@ -28,7 +31,7 @@ func GenerateToken(user models.User, secret string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
 	tokenString, err := token.SignedString([]byte(secret))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("GenerateToken: %w", err)
 	}
 
 	return tokenString, nil
@@ -48,12 +51,12 @@ func ParseToken(tokenString, secret string) (*TokenClaims, error) {
 		jwt.WithLeeway(5*time.Second),
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ParseToken: %w", err)
 	}
 
 	claims, ok := token.Claims.(*TokenClaims)
 	if !ok || !token.Valid {
-		return nil, errors.New("invalid token")
+		return nil, ErrInvalidToken
 	}
 
 	return claims, nil

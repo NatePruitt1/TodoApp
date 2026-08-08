@@ -7,15 +7,26 @@ import (
 	"github.com/google/uuid"
 )
 
+var ErrCategoryIndexOutOfBounds = errors.New("category index out of bounds.")
+
 func (ps *ProjectServiceImpl) CheckCategoryOwner(categoryId, userId uuid.UUID) error {
 	return ps.ProjectRepository.CheckCategoryOwner(categoryId, userId)
 }
 
-func (ps *ProjectServiceImpl) GetCategory(categoryId uuid.UUID) (*models.Category, error) {
+func (ps *ProjectServiceImpl) GetCategory(userId, categoryId uuid.UUID) (*models.Category, error) {
+	err := ps.CheckCategoryOwner(categoryId, userId)
+	if err != nil {
+		return nil, err
+	}
 	return ps.ProjectRepository.GetCategoryByID(categoryId)
 }
 
-func (ps *ProjectServiceImpl) AddCategory(projectId uuid.UUID, categoryName string) (*models.Category, error) {
+func (ps *ProjectServiceImpl) AddCategory(userId, projectId uuid.UUID, categoryName string) (*models.Category, error) {
+	err := ps.CheckProjectOwner(projectId, userId)
+	if err != nil {
+		return nil, err
+	}
+
 	project, err := ps.ProjectRepository.GetAggregate(projectId)
 	if err != nil {
 		return nil, err
@@ -38,11 +49,20 @@ func (ps *ProjectServiceImpl) AddCategory(projectId uuid.UUID, categoryName stri
 	return &newCategory, nil
 }
 
-func (ps *ProjectServiceImpl) DeleteCategory(categoryId uuid.UUID) error {
+func (ps *ProjectServiceImpl) DeleteCategory(userId, categoryId uuid.UUID) error {
+	err := ps.CheckCategoryOwner(categoryId, userId)
+	if err != nil {
+		return err
+	}
 	return ps.ProjectRepository.DeleteCategory(categoryId)
 }
 
-func (ps *ProjectServiceImpl) MoveCategory(categoryId uuid.UUID, index int) (*models.Category, error) {
+func (ps *ProjectServiceImpl) MoveCategory(userId, categoryId uuid.UUID, index int) (*models.Category, error) {
+	err := ps.CheckCategoryOwner(categoryId, userId)
+	if err != nil {
+		return nil, err
+	}
+
 	category, err := ps.ProjectRepository.GetCategoryByID(categoryId)
 	if err != nil {
 		return nil, err
@@ -74,11 +94,16 @@ func (ps *ProjectServiceImpl) MoveCategory(categoryId uuid.UUID, index int) (*mo
 
 		return element, nil
 	} else {
-		return nil, errors.New("Index is outside of bounds.")
+		return nil, ErrCategoryIndexOutOfBounds
 	}
 }
 
-func (ps *ProjectServiceImpl) RenameCategory(categoryId uuid.UUID, name string) (*models.Category, error) {
+func (ps *ProjectServiceImpl) RenameCategory(userId, categoryId uuid.UUID, name string) (*models.Category, error) {
+	err := ps.CheckCategoryOwner(categoryId, userId)
+	if err != nil {
+		return nil, err
+	}
+
 	category, err := ps.ProjectRepository.GetCategoryByID(categoryId)
 	if err != nil {
 		return nil, err
