@@ -193,6 +193,7 @@ func (ur *ProjectRepositoryImpl) GetAllUserProjects(owner_id uuid.UUID) ([]*mode
 		context.Background(),
 		ur.db,
 		q,
+		ErrProjectNotFound,
 		[]interface{}{owner_id},
 		func(r pgx.Rows) (*models.Project, error) {
 			var p models.Project
@@ -260,6 +261,7 @@ func (ur *ProjectRepositoryImpl) GetCategoriesForProject(projectId uuid.UUID) ([
 		context.Background(),
 		ur.db,
 		q,
+		ErrCategoryNotFound,
 		[]interface{}{projectId},
 		func(r pgx.Rows) (*models.Category, error) {
 			var c models.Category
@@ -317,6 +319,7 @@ func (ur *ProjectRepositoryImpl) GetCardsForCategory(categoryId uuid.UUID) ([]*m
 		context.Background(),
 		ur.db,
 		q,
+		ErrCategoryNotFound,
 		[]interface{}{categoryId},
 		func(r pgx.Rows) (*models.Card, error) {
 			var c models.Card
