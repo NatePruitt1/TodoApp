@@ -27,7 +27,7 @@ jobs:
             
             - name: Generate coverage report
               working-directory: ./apps/backend
-              run: go tool cover -func=coverage.out && gocover-cobertura < cover.out > coverage.xml
+              run: go tool cover -func=coverage.out && gocover-cobertura < coverage.out > coverage.xml
             
             - name: Upload coverage report
               uses: actions/upload-code-coverage@v1
