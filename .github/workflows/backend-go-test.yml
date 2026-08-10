@@ -23,9 +23,9 @@ jobs:
             
             - name: Run tests
               working-directory: ./apps/backend
-              run: go test -v ./...
+              run: go test -v -covermode=atomic -coverpkg=./... -coverprofile=coverage.out ./...
             
             - name: Generate coverage report
               working-directory: ./apps/backend
-              run: go test -coverageprofile:coverage.out ./...
+              run: go tool cover -func=coverage.out
             
