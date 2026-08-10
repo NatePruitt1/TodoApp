@@ -3,81 +3,52 @@ package repository
 import (
 	"backend/internal/models"
 
-	"context"
 	"errors"
 	"testing"
 	"time"
 
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func setTestDB(t *testing.T) *pgxpool.Pool {
-	t.Helper()
-
-	pool, err := pgxpool.New(t.Context(), "postgres://postgres:Wallah54639!@localhost:5432/kanban_test")
-	if err != nil {
-		t.Fatalf("Failed to connect to test db: %v", err)
-	}
-
-	t.Cleanup(func() {
-		pool.Close()
-	})
-
-	return pool
-}
-
-func setTestTx(t *testing.T, pool *pgxpool.Pool) pgx.Tx {
-	t.Helper()
-
-	tx, err := pool.Begin(context.Background())
-	if err != nil {
-		t.Fatalf("failed to being tx: %v", err)
-	}
-
-	t.Cleanup(func() {
-		_ = tx.Rollback(context.Background())
-	})
-
-	return tx
-}
-
 func TestUserRepository_Create(t *testing.T) {
-	pool := setTestDB(t)
+	pool, m := setTestDB(t)
+	defer func() {
+		require.NoError(t, m.Down())
+	}()
 	repo := NewUserRepository(pool)
 
+	now := time.Now()
+	id := uuid.New()
+
 	e := repo.Create(models.User{
-		ID:           uuid.New(),
+		ID:           id,
 		Username:     "username",
 		PasswordHash: "abcd",
-		CreatedAt:    time.Now(),
+		CreatedAt:    now,
 		LastLogin:    nil,
 	})
 
-	if e != nil {
-		t.Fatalf("Error creating user. %v", e)
-	}
+	require.NoError(t, e)
 
 	u, e := repo.GetByUsername("username")
-	if e != nil {
-		t.Fatalf("Error getting user. %v", e)
-	}
+	require.NoError(t, e)
 
-	if u.Username != "username" {
-		t.Fatalf("Wrong username")
-	}
-
-	pool.Exec(context.Background(), `DELETE FROM users`)
+	assert.Equal(t, u.Username, "username")
+	assert.Equal(t, u.PasswordHash, "abcd")
+	assert.Equal(t, u.ID, id)
+	assert.WithinDuration(t, u.CreatedAt, now, 1*time.Second)
 }
 
 func TestUserRepository_Delete(t *testing.T) {
-	pool := setTestDB(t)
+	pool, m := setTestDB(t)
+	defer func() {
+		require.NoError(t, m.Down())
+	}()
 	repo := NewUserRepository(pool)
-
-	t.Cleanup(func() {
-		pool.Exec(context.Background(), `DELETE FROM users`)
-	})
 
 	ID := uuid.New()
 
@@ -104,7 +75,10 @@ func TestUserRepository_Delete(t *testing.T) {
 }
 
 func TestUserRepository_GetByUsername(t *testing.T) {
-	pool := setTestDB(t)
+	pool, m := setTestDB(t)
+	defer func() {
+		require.NoError(t, m.Down())
+	}()
 	repo := NewUserRepository(pool)
 
 	_, e := repo.GetByUsername("UserDoesNotExist")
@@ -118,12 +92,11 @@ func TestUserRepository_GetByUsername(t *testing.T) {
 }
 
 func TestUserRepository_GetByID(t *testing.T) {
-	pool := setTestDB(t)
+	pool, m := setTestDB(t)
+	defer func() {
+		require.NoError(t, m.Down())
+	}()
 	repo := NewUserRepository(pool)
-
-	t.Cleanup(func() {
-		pool.Exec(context.Background(), `DELETE FROM users`)
-	})
 
 	ID := uuid.New()
 
@@ -149,12 +122,11 @@ func TestUserRepository_GetByID(t *testing.T) {
 }
 
 func TestUserRepository_UpdateLastLogin(t *testing.T) {
-	pool := setTestDB(t)
+	pool, m := setTestDB(t)
+	defer func() {
+		require.NoError(t, m.Down())
+	}()
 	repo := NewUserRepository(pool)
-
-	t.Cleanup(func() {
-		pool.Exec(context.Background(), `DELETE FROM users`)
-	})
 
 	ID := uuid.New()
 
