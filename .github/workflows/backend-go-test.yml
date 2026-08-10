@@ -18,11 +18,14 @@ jobs:
                 go-version: '1.26.x'
             
             - name: Install dependencies
+              working-directory: ./apps/backend
               run: go mod tidy
             
             - name: Run tests
+              working-directory: ./apps/backend
               run: go test -v ./...
             
             - name: Generate coverage report
+              working-directory: ./apps/backend
               run: go test -coverageprofile:coverage.out ./...
             
