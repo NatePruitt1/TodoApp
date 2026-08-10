@@ -27,14 +27,5 @@ jobs:
             
             - name: Generate coverage report
               working-directory: ./apps/backend
-              run: |
-                go tool cover -func=coverage.out
-                go run github.com/t-yuki/gocover-cobertura@latest < coverage.out > coverage.xml
-            
-            - name: Upload coverage report
-              uses: actions/upload-code-coverage@v1
-              with:
-                file: apps/backend/coverage.xml
-                language: go
-                label: Backend coverage
+              run: go tool cover -func=coverage.out
             

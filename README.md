@@ -24,6 +24,8 @@ This project will continue to be updated and will eventually be fully featured.
     - Cards and categories currently have no get endpoints, instead edits are seen through the project aggregate.
  - Simple Frontend.
     - Currenlty only basic styles and functionalities, major focus of future updates.
+ - Simple CI pipeline
+    - Pushes run tests and output coverage report.
 
 ## Tech Stack
 **Frontend:** Typescript, React, Vite \
