@@ -33,7 +33,7 @@ func (ph *ProjectHandlerImpl) AddCategory(c *gin.Context) {
 		return
 	}
 
-	cat, err := ph.ProjectService.AddCategory(projectUUID, req.Name)
+	cat, err := ph.ProjectService.AddCategory(userUUID, projectUUID, req.Name)
 	resp := dto.NewCategoryResponse(cat)
 
 	c.JSON(http.StatusAccepted, gin.H{
@@ -68,7 +68,7 @@ func (ph *ProjectHandlerImpl) UpdateCategory(c *gin.Context) {
 		return
 	}
 
-	cat, err := ph.ProjectService.RenameCategory(catergoryUUID, req.Name)
+	cat, err := ph.ProjectService.RenameCategory(userUUID, catergoryUUID, req.Name)
 	resp := dto.NewCategoryResponse(cat)
 
 	c.JSON(http.StatusAccepted, gin.H{
@@ -96,7 +96,7 @@ func (ph *ProjectHandlerImpl) DeleteCategory(c *gin.Context) {
 		return
 	}
 
-	err = ph.ProjectService.DeleteCategory(catergoryUUID)
+	err = ph.ProjectService.DeleteCategory(userUUID, catergoryUUID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.BadRequestError(c, "failed to delete category.", err.Error()))
 		return
@@ -131,7 +131,7 @@ func (ph *ProjectHandlerImpl) MoveCategory(c *gin.Context) {
 		return
 	}
 
-	cat, err := ph.ProjectService.MoveCategory(catergoryUUID, req.Index)
+	cat, err := ph.ProjectService.MoveCategory(userUUID, catergoryUUID, req.Index)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, dto.BadRequestError(c, "failed to move category.", err.Error()))
 		return

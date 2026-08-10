@@ -50,7 +50,7 @@ func (ph *ProjectHandlerImpl) AddCard(c *gin.Context) {
 		return
 	}
 
-	card, err := ph.ProjectService.AddCard(categoryUUID, req.Title, req.Content)
+	card, err := ph.ProjectService.AddCard(userUUID, categoryUUID, req.Title, req.Content)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.BadRequestError(c, "failed to create card.", err.Error()))
 		return
@@ -93,7 +93,7 @@ func (ph *ProjectHandlerImpl) RenameCard(c *gin.Context) {
 	var card *models.Card
 
 	if req.Title != "" {
-		card, err = ph.ProjectService.RenameCard(cardUUID, req.Title)
+		card, err = ph.ProjectService.RenameCard(userUUID, cardUUID, req.Title)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, dto.BadRequestError(c, "failed to rename card.", err.Error()))
 			return
@@ -101,7 +101,7 @@ func (ph *ProjectHandlerImpl) RenameCard(c *gin.Context) {
 	}
 
 	if req.Content != "" {
-		card, err = ph.ProjectService.EditCard(cardUUID, req.Content)
+		card, err = ph.ProjectService.EditCard(userUUID, cardUUID, req.Content)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, dto.BadRequestError(c, "failed to edit card content.", err.Error()))
 			return
@@ -142,7 +142,7 @@ func (ph *ProjectHandlerImpl) EditCard(c *gin.Context) {
 		return
 	}
 
-	card, err := ph.ProjectService.EditCard(cardUUID, req.Content)
+	card, err := ph.ProjectService.EditCard(userUUID, cardUUID, req.Content)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.BadRequestError(c, "failed to edit card.", err.Error()))
 		return
@@ -175,7 +175,7 @@ func (ph *ProjectHandlerImpl) DeleteCard(c *gin.Context) {
 		return
 	}
 
-	err = ph.ProjectService.DeleteCard(cardUUID)
+	err = ph.ProjectService.DeleteCard(userUUID, cardUUID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.BadRequestError(c, "failed to delete card.", err.Error()))
 		return
@@ -210,7 +210,7 @@ func (ph *ProjectHandlerImpl) MoveCard(c *gin.Context) {
 		return
 	}
 
-	card, err := ph.ProjectService.MoveCard(cardUUID, req.CategoryID)
+	card, err := ph.ProjectService.MoveCard(userUUID, cardUUID, req.CategoryID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.BadRequestError(c, "failed to move card.", err.Error()))
 		return
