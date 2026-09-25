@@ -58,11 +58,17 @@ export function CategoryCard({category, reloadProject}: {category: Category, rel
         if (e.currentTarget.contains(e.relatedTarget as Node | null)) {
             return;
         }
+
         setAddCardFormFocus(false);
 
         try {
+            if(createCardFormData.title.length < 3 || createCardFormData.content.length < 3) {
+                throw new Error("Title or content empty.")
+            }
+
             await cardsApi.create(category.id, createCardFormData)
             setCreateCardFormData({title: "", content: ""})
+            
             reloadProject();
         } catch (error) {
             console.error(error)
@@ -70,7 +76,7 @@ export function CategoryCard({category, reloadProject}: {category: Category, rel
     };
 
     return (
-        <div key={category.id} className="category" draggable={true} onDragStart={startDrag} onDragOver={dragOver} onDrop={dropOver} >
+        <div key={category.id} className="category" draggable={true} onDragStart={startDrag} onDragOver={dragOver} onDrop={dropOver}>
             <div className="category-header">
                 <h3 className="category-title">{category.name}</h3>
                 <button id="delete" className="small-icon-button" onClick={deleteCategory}><img src={trashUrl} /></button>
@@ -80,7 +86,7 @@ export function CategoryCard({category, reloadProject}: {category: Category, rel
                 <CardElement key={v.id} card={v} reloadProject={reloadProject} />
             ))}
 
-            <div className="card">
+            <div className="card create-card">
                 {addCardFormFocus ?
                 <div className="create-card-content">
                     <form onBlur={handleFormBlur}>

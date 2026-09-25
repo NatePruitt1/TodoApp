@@ -31,8 +31,9 @@
     padding-right: .5rem;
 }
 
-.create-card-content:hover {
-    background-color: lightgray;
+.card.create-card:hover {
+    background-color: var(--on-background);
+    color: var(--primary);
 }
 
 .card {

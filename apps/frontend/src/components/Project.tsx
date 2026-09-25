@@ -54,7 +54,12 @@ export function ProjectScreen() {
     const addCategory = async (event: React.SubmitEvent<HTMLFormElement>) => {
         event.preventDefault();
         try {
+            if(formData.name.length < 3) {
+                throw new Error("Form name submitted less than 3 characters")
+            }
+
             await categoriesApi.create(project.id, {name: formData.name})
+            
             setFormData({name: ""})
             getProject()
         } catch (e) {
